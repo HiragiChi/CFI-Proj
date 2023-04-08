@@ -1,0 +1,352 @@
+commit 1f686f2b3e17505b00c9e8ff88354debc843d94d
+Merge: c9ad266bbef5 77fc73ac89be
+Author: Jakub Kicinski <kuba@kernel.org>
+Date:   Wed Mar 30 19:14:11 2022 -0700
+
+    Merge branch 'wireguard-patches-for-5-18-rc1'
+    
+    Jason A. Donenfeld says:
+    
+    ====================
+    wireguard patches for 5.18-rc1
+    
+    Here's a small set of fixes for the next net push:
+    
+    1) Pipacs reported a CFI violation in a cleanup routine, which he
+       triggered using grsec's RAP. I haven't seen reports of this yet from
+       the Android/CFI world yet, but it's only a matter of time there.
+    
+    2) A small rng cleanup to the self test harness to make it initialize
+       faster on 5.18.
+    
+    3) Wang reported and fixed a skb leak for CONFIG_IPV6=n.
+    
+    4) After Wang's fix for the direct leak, I investigated how that code
+       path even could be hit, and found that the netlink layer still
+       handles IPv6 endpoints, when it probably shouldn't.
+    ====================
+    
+    Link: https://lore.kernel.org/r/20220330013127.426620-1-Jason@zx2c4.com
+    Signed-off-by: Jakub Kicinski <kuba@kernel.org>
+
+commit 5e6928249b81b4d8727ab6a4037a171d15455cb0
+Merge: 3563f55ce654 64f9111dd622
+Author: Linus Torvalds <torvalds@linux-foundation.org>
+Date:   Tue Jun 29 13:39:41 2021 -0700
+
+    Merge tag 'acpi-5.14-rc1' of git://git.kernel.org/pub/scm/linux/kernel/git/rafael/linux-pm
+    
+    Pull ACPI updates from Rafael Wysocki:
+     "These update the ACPICA code in the kernel to the 20210604 upstream
+      revision, add preliminary support for the Platform Runtime Mechanism
+      (PRM), address issues related to the handling of device dependencies
+      in the ACPI device eunmeration code, improve the tracking of ACPI
+      power resource states, improve the ACPI support for suspend-to-idle on
+      AMD systems, continue the unification of message printing in the ACPI
+      code, address assorted issues and clean up the code in a number of
+      places.
+    
+      Specifics:
+    
+       - Update ACPICA code in the kernel to upstrea revision 20210604
+         including the following changes:
+    
+          - Add defines for the CXL Host Bridge Structureand and add the
+            CFMWS structure definition to CEDT (Alison Schofield).
+          - iASL: Finish support for the IVRS ACPI table (Bob Moore).
+          - iASL: Add support for the SVKL table (Bob Moore).
+          - iASL: Add full support for RGRT ACPI table (Bob Moore).
+          - iASL: Add support for the BDAT ACPI table (Bob Moore).
+          - iASL: add disassembler support for PRMT (Erik Kaneda).
+          - Fix memory leak caused by _CID repair function (Erik Kaneda).
+          - Add support for PlatformRtMechanism OpRegion (Erik Kaneda).
+          - Add PRMT module header to facilitate parsing (Erik Kaneda).
+          - Add _PLD panel positions (Fabian Wüthrich).
+          - MADT: add Multiprocessor Wakeup Mailbox Structure and the SVKL
+            table headers (Kuppuswamy Sathyanarayanan).
+          - Use ACPI_FALLTHROUGH (Wei Ming Chen).
+    
+       - Add preliminary support for the Platform Runtime Mechanism (PRM) to
+         allow the AML interpreter to call PRM functions (Erik Kaneda).
+    
+       - Address some issues related to the handling of device dependencies
+         reported by _DEP in the ACPI device enumeration code and clean up
+         some related pieces of it (Rafael Wysocki).
+    
+       - Improve the tracking of states of ACPI power resources (Rafael
+         Wysocki).
+    
+       - Improve ACPI support for suspend-to-idle on AMD systems (Alex
+         Deucher, Mario Limonciello, Pratik Vishwakarma).
+    
+       - Continue the unification and cleanup of message printing in the
+         ACPI code (Hanjun Guo, Heiner Kallweit).
+    
+       - Fix possible buffer overrun issue with the description_show() sysfs
+         attribute method (Krzysztof Wilczyński).
+    
+       - Improve the acpi_mask_gpe kernel command line parameter handling
+         and clean up the core ACPI code related to sysfs (Andy Shevchenko,
+         Baokun Li, Clayton Casciato).
+    
+       - Postpone bringing devices in the general ACPI PM domain to D0
+         during resume from system-wide suspend until they are really needed
+         (Dmitry Torokhov).
+    
+       - Make the ACPI processor driver fix up C-state latency if not
+         ordered (Mario Limonciello).
+    
+       - Add support for identifying devices depening on the given one that
+         are not its direct descendants with the help of _DEP (Daniel
+         Scally).
+    
+       - Extend the checks related to ACPI IRQ overrides on x86 in order to
+         avoid false-positives (Hui Wang).
+    
+       - Add battery DPTF participant for Intel SoCs (Sumeet Pawnikar).
+    
+       - Rearrange the ACPI fan driver and device power management code to
+         use a common list of device IDs (Rafael Wysocki).
+    
+       - Fix clang CFI violation in the ACPI BGRT table parsing code and
+         clean it up (Nathan Chancellor).
+    
+       - Add GPE-related quirks for some laptops to the EC driver (Chris
+         Chiu, Zhang Rui).
+    
+       - Make the ACPI PPTT table parsing code populate the cache-id value
+         if present in the firmware (James Morse).
+    
+       - Remove redundant clearing of context->ret.pointer from
+         acpi_run_osc() (Hans de Goede).
+    
+       - Add missing acpi_put_table() in acpi_init_fpdt() (Jing Xiangfeng).
+    
+       - Make ACPI APEI handle ARM Processor Error CPER records like Memory
+         Error ones to avoid user space task lockups (Xiaofei Tan).
+    
+       - Stop warning about disabled ACPI in APEI (Jon Hunter).
+    
+       - Fix fall-through warning for Clang in the SBSHC driver (Gustavo A.
+         R. Silva).
+    
+       - Add custom DSDT file as Makefile prerequisite (Richard Fitzgerald).
+    
+       - Initialize local variable to avoid garbage being returned (Colin
+         Ian King).
+    
+       - Simplify assorted pieces of code, address assorted coding style and
+         documentation issues and comment typos (Baokun Li, Christophe
+         JAILLET, Clayton Casciato, Liu Shixin, Shaokun Zhang, Wei Yongjun,
+         Yang Li, Zhen Lei)"
+    
+    * tag 'acpi-5.14-rc1' of git://git.kernel.org/pub/scm/linux/kernel/git/rafael/linux-pm: (97 commits)
+      ACPI: PM: postpone bringing devices to D0 unless we need them
+      ACPI: tables: Add custom DSDT file as makefile prerequisite
+      ACPI: bgrt: Use sysfs_emit
+      ACPI: bgrt: Fix CFI violation
+      ACPI: EC: trust DSDT GPE for certain HP laptop
+      ACPI: scan: Simplify acpi_table_events_fn()
+      ACPI: PM: Adjust behavior for field problems on AMD systems
+      ACPI: PM: s2idle: Add support for new Microsoft UUID
+      ACPI: PM: s2idle: Add support for multiple func mask
+      ACPI: PM: s2idle: Refactor common code
+      ACPI: PM: s2idle: Use correct revision id
+      ACPI: sysfs: Remove tailing return statement in void function
+      ACPI: sysfs: Use __ATTR_RO() and __ATTR_RW() macros
+      ACPI: sysfs: Sort headers alphabetically
+      ACPI: sysfs: Refactor param_get_trace_state() to drop dead code
+      ACPI: sysfs: Unify pattern of memory allocations
+      ACPI: sysfs: Allow bitmap list to be supplied to acpi_mask_gpe
+      ACPI: sysfs: Make sparse happy about address space in use
+      ACPI: scan: Fix race related to dropping dependencies
+      ACPI: scan: Reorganize acpi_device_add()
+      ...
+
+commit dfef7710d749617513a6c8c2bfb29ba415dab7e8
+Merge: f9ef9b82ea18 84b7355b7a8a 8d287e8292ea d1059c1b1146
+Author: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+Date:   Tue Jun 29 15:46:52 2021 +0200
+
+    Merge branches 'acpi-bus', 'acpi-scan' and 'acpi-tables'
+    
+    * acpi-bus:
+      ACPI: Remove redundant clearing of context->ret.pointer from acpi_run_osc()
+    
+    * acpi-scan:
+      ACPI: scan: Simplify acpi_table_events_fn()
+      ACPI: scan: Fix race related to dropping dependencies
+      ACPI: scan: Reorganize acpi_device_add()
+      ACPI: scan: Fix device object rescan in acpi_scan_clear_dep()
+      ACPI: scan: Make acpi_walk_dep_device_list()
+      ACPI: scan: Rearrange acpi_dev_get_first_consumer_dev_cb()
+      ACPI: scan: Define acpi_bus_put_acpi_device() as static inline
+      ACPI: scan: initialize local variable to avoid garbage being returned
+      ACPI: scan: Add function to fetch dependent of ACPI device
+      ACPI: scan: Extend acpi_walk_dep_device_list()
+      ACPI: scan: Rearrange dep_unmet initialization
+    
+    * acpi-tables:
+      ACPI: tables: Add custom DSDT file as makefile prerequisite
+      ACPI: bgrt: Use sysfs_emit
+      ACPI: bgrt: Fix CFI violation
+      ACPI: tables: FPDT: Add missing acpi_put_table() in acpi_init_fpdt()
+      ACPI: tables: PPTT: Populate cache-id if provided by firmware
+
+commit f37ccf8fce155d08ae2a4fb3db677911ced0c21a
+Author: Nathan Chancellor <nathan@kernel.org>
+Date:   Tue Jun 22 18:38:01 2021 -0700
+
+    ACPI: bgrt: Fix CFI violation
+    
+    clang's Control Flow Integrity requires that every indirect call has a
+    valid target, which is based on the type of the function pointer. The
+    *_show() functions in this file are written as if they will be called
+    from dev_attr_show(); however, they will be called from
+    sysfs_kf_seq_show() because the files were created by
+    sysfs_create_group() and the sysfs ops are based on kobj_sysfs_ops
+    because of kobject_add_and_create(). Because the *_show() functions do
+    not match the type of the show() member in struct kobj_attribute, there
+    is a CFI violation.
+    
+    $ cat /sys/firmware/acpi/bgrt/{status,type,version,{x,y}offset}}
+    1
+    0
+    1
+    522
+    307
+    
+    $ dmesg | grep "CFI failure"
+    [  267.761825] CFI failure (target: type_show.d5e1ad21498a5fd14edbc5c320906598.cfi_jt+0x0/0x8):
+    [  267.762246] CFI failure (target: xoffset_show.d5e1ad21498a5fd14edbc5c320906598.cfi_jt+0x0/0x8):
+    [  267.762584] CFI failure (target: status_show.d5e1ad21498a5fd14edbc5c320906598.cfi_jt+0x0/0x8):
+    [  267.762973] CFI failure (target: yoffset_show.d5e1ad21498a5fd14edbc5c320906598.cfi_jt+0x0/0x8):
+    [  267.763330] CFI failure (target: version_show.d5e1ad21498a5fd14edbc5c320906598.cfi_jt+0x0/0x8):
+    
+    Convert these functions to the type of the show() member in struct
+    kobj_attribute so that there is no more CFI violation. Because these
+    functions are all so similar, combine them into a macro.
+    
+    Fixes: d1ff4b1cdbab ("ACPI: Add support for exposing BGRT data")
+    Link: https://github.com/ClangBuiltLinux/linux/issues/1406
+    Signed-off-by: Nathan Chancellor <nathan@kernel.org>
+    Reviewed-by: Kees Cook <keescook@chromium.org>
+    Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+
+commit 5deac80d4571dffb51f452f0027979d72259a1b9
+Author: Nathan Chancellor <nathan@kernel.org>
+Date:   Wed Apr 14 17:11:12 2021 -0700
+
+    perf/amd/uncore: Fix sysfs type mismatch
+    
+    dev_attr_show() calls the __uncore_*_show() functions via an indirect
+    call but their type does not currently match the type of the show()
+    member in 'struct device_attribute', resulting in a Control Flow
+    Integrity violation.
+    
+    $ cat /sys/devices/amd_l3/format/umask
+    config:8-15
+    
+    $ dmesg | grep "CFI failure"
+    [ 1258.174653] CFI failure (target: __uncore_umask_show...):
+    
+    Update the type in the DEFINE_UNCORE_FORMAT_ATTR macro to match
+    'struct device_attribute' so that there is no more CFI violation.
+    
+    Fixes: 06f2c24584f3 ("perf/amd/uncore: Prepare to scale for more attributes that vary per family")
+    Signed-off-by: Nathan Chancellor <nathan@kernel.org>
+    Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+    Link: https://lkml.kernel.org/r/20210415001112.3024673-2-nathan@kernel.org
+
+commit de5bc7b425d4c27ae5faa00ea7eb6b9780b9a355
+Author: Nathan Chancellor <nathan@kernel.org>
+Date:   Wed Apr 14 17:11:11 2021 -0700
+
+    x86/events/amd/iommu: Fix sysfs type mismatch
+    
+    dev_attr_show() calls _iommu_event_show() via an indirect call but
+    _iommu_event_show()'s type does not currently match the type of the
+    show() member in 'struct device_attribute', resulting in a Control Flow
+    Integrity violation.
+    
+    $ cat /sys/devices/amd_iommu_1/events/mem_dte_hit
+    csource=0x0a
+    
+    $ dmesg | grep "CFI failure"
+    [ 3526.735140] CFI failure (target: _iommu_event_show...):
+    
+    Change _iommu_event_show() and 'struct amd_iommu_event_desc' to
+    'struct device_attribute' so that there is no more CFI violation.
+    
+    Fixes: 7be6296fdd75 ("perf/x86/amd: AMD IOMMU Performance Counter PERF uncore PMU implementation")
+    Signed-off-by: Nathan Chancellor <nathan@kernel.org>
+    Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+    Link: https://lkml.kernel.org/r/20210415001112.3024673-1-nathan@kernel.org
+
+commit e6d701dca9893990d999fd145e3e07223c002b06
+Author: Nathan Chancellor <nathan@kernel.org>
+Date:   Thu Jun 11 21:51:50 2020 -0700
+
+    ACPI: sysfs: Fix pm_profile_attr type
+    
+    When running a kernel with Clang's Control Flow Integrity implemented,
+    there is a violation that happens when accessing
+    /sys/firmware/acpi/pm_profile:
+    
+    $ cat /sys/firmware/acpi/pm_profile
+    0
+    
+    $ dmesg
+    ...
+    [   17.352564] ------------[ cut here ]------------
+    [   17.352568] CFI failure (target: acpi_show_profile+0x0/0x8):
+    [   17.352572] WARNING: CPU: 3 PID: 497 at kernel/cfi.c:29 __cfi_check_fail+0x33/0x40
+    [   17.352573] Modules linked in:
+    [   17.352575] CPU: 3 PID: 497 Comm: cat Tainted: G        W         5.7.0-microsoft-standard+ #1
+    [   17.352576] RIP: 0010:__cfi_check_fail+0x33/0x40
+    [   17.352577] Code: 48 c7 c7 50 b3 85 84 48 c7 c6 50 0a 4e 84 e8 a4 d8 60 00 85 c0 75 02 5b c3 48 c7 c7 dc 5e 49 84 48 89 de 31 c0 e8 7d 06 eb ff <0f> 0b 5b c3 00 00 cc cc 00 00 cc cc 00 85 f6 74 25 41 b9 ea ff ff
+    [   17.352577] RSP: 0018:ffffaa6dc3c53d30 EFLAGS: 00010246
+    [   17.352578] RAX: 331267e0c06cee00 RBX: ffffffff83d85890 RCX: ffffffff8483a6f8
+    [   17.352579] RDX: ffff9cceabbb37c0 RSI: 0000000000000082 RDI: ffffffff84bb9e1c
+    [   17.352579] RBP: ffffffff845b2bc8 R08: 0000000000000001 R09: ffff9cceabbba200
+    [   17.352579] R10: 000000000000019d R11: 0000000000000000 R12: ffff9cc947766f00
+    [   17.352580] R13: ffffffff83d6bd50 R14: ffff9ccc6fa80000 R15: ffffffff845bd328
+    [   17.352582] FS:  00007fdbc8d13580(0000) GS:ffff9cce91ac0000(0000) knlGS:0000000000000000
+    [   17.352582] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+    [   17.352583] CR2: 00007fdbc858e000 CR3: 00000005174d0000 CR4: 0000000000340ea0
+    [   17.352584] Call Trace:
+    [   17.352586]  ? rev_id_show+0x8/0x8
+    [   17.352587]  ? __cfi_check+0x45bac/0x4b640
+    [   17.352589]  ? kobj_attr_show+0x73/0x80
+    [   17.352590]  ? sysfs_kf_seq_show+0xc1/0x140
+    [   17.352592]  ? ext4_seq_options_show.cfi_jt+0x8/0x8
+    [   17.352593]  ? seq_read+0x180/0x600
+    [   17.352595]  ? sysfs_create_file_ns.cfi_jt+0x10/0x10
+    [   17.352596]  ? tlbflush_read_file+0x8/0x8
+    [   17.352597]  ? __vfs_read+0x6b/0x220
+    [   17.352598]  ? handle_mm_fault+0xa23/0x11b0
+    [   17.352599]  ? vfs_read+0xa2/0x130
+    [   17.352599]  ? ksys_read+0x6a/0xd0
+    [   17.352601]  ? __do_sys_getpgrp+0x8/0x8
+    [   17.352602]  ? do_syscall_64+0x72/0x120
+    [   17.352603]  ? entry_SYSCALL_64_after_hwframe+0x44/0xa9
+    [   17.352604] ---[ end trace 7b1fa81dc897e419 ]---
+    
+    When /sys/firmware/acpi/pm_profile is read, sysfs_kf_seq_show is called,
+    which in turn calls kobj_attr_show, which gets the ->show callback
+    member by calling container_of on attr (casting it to struct
+    kobj_attribute) then calls it.
+    
+    There is a CFI violation because pm_profile_attr is of type
+    struct device_attribute but kobj_attr_show calls ->show expecting it
+    to be from struct kobj_attribute. CFI checking ensures that function
+    pointer types match when doing indirect calls. Fix pm_profile_attr to
+    be defined in terms of kobj_attribute so there is no violation or
+    mismatch.
+    
+    Fixes: 362b646062b2 ("ACPI: Export FADT pm_profile integer value to userspace")
+    Link: https://github.com/ClangBuiltLinux/linux/issues/1051
+    Reported-by: yuu ichii <byahu140@heisei.be>
+    Signed-off-by: Nathan Chancellor <natechancellor@gmail.com>
+    Cc: 3.10+ <stable@vger.kernel.org> # 3.10+
+    Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>

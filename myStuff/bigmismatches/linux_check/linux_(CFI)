@@ -1,0 +1,1164 @@
+commit d0f6cfb2bd165b0aa307750e07e03420859bd554
+Author: Kees Cook <keescook@chromium.org>
+Date:   Thu Apr 21 09:55:04 2022 -0700
+
+    thermal: int340x: Fix attr.show callback prototype
+    
+    Control Flow Integrity (CFI) instrumentation of the kernel noticed that
+    the caller, dev_attr_show(), and the callback, odvp_show(), did not have
+    matching function prototypes, which would cause a CFI exception to be
+    raised. Correct the prototype by using struct device_attribute instead
+    of struct kobj_attribute.
+    
+    Reported-and-tested-by: Joao Moreira <joao@overdrivepizza.com>
+    Link: https://lore.kernel.org/lkml/067ce8bd4c3968054509831fa2347f4f@overdrivepizza.com/
+    Fixes: 006f006f1e5c ("thermal/int340x_thermal: Export OEM vendor variables")
+    Cc: 5.8+ <stable@vger.kernel.org> # 5.8+
+    Signed-off-by: Kees Cook <keescook@chromium.org>
+    Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+
+commit 72e1781a5de9e3ee804e24f7ce9a7dd85596fc51
+Merge: 09710d82c0a3 102acbacfd9a
+Author: Alexei Starovoitov <ast@kernel.org>
+Date:   Tue Sep 28 16:27:18 2021 -0700
+
+    Merge branch 'bpf: Build with -Wcast-function-type'
+    
+    Kees Cook says:
+    
+    ====================
+    
+    Hi,
+    
+    In order to keep ahead of cases in the kernel where Control Flow Integrity
+    (CFI) may trip over function call casts, enabling -Wcast-function-type
+    is helpful. To that end, replace BPF_CAST_CALL() as it triggers warnings
+    with this option and is now one of the last places in the kernel in need
+    of fixing.
+    
+    Thanks,
+    
+    -Kees
+    
+    v2:
+    - rebase to bpf-next
+    - add acks
+    v1: https://lore.kernel.org/lkml/20210927182700.2980499-1-keescook@chromium.org
+    ====================
+    
+    Signed-off-by: Alexei Starovoitov <ast@kernel.org>
+
+commit 102acbacfd9a96d101abd96d1a7a5bf92b7c3e8e
+Author: Kees Cook <keescook@chromium.org>
+Date:   Tue Sep 28 16:09:46 2021 -0700
+
+    bpf: Replace callers of BPF_CAST_CALL with proper function typedef
+    
+    In order to keep ahead of cases in the kernel where Control Flow
+    Integrity (CFI) may trip over function call casts, enabling
+    -Wcast-function-type is helpful. To that end, BPF_CAST_CALL causes
+    various warnings and is one of the last places in the kernel
+    triggering this warning.
+    
+    For actual function calls, replace BPF_CAST_CALL() with a typedef, which
+    captures the same details about the given function pointers.
+    
+    This change results in no object code difference.
+    
+    Signed-off-by: Kees Cook <keescook@chromium.org>
+    Signed-off-by: Alexei Starovoitov <ast@kernel.org>
+    Acked-by: Andrii Nakryiko <andrii@kernel.org>
+    Acked-by: Gustavo A. R. Silva <gustavoars@kernel.org>
+    Link: https://github.com/KSPP/linux/issues/20
+    Link: https://lore.kernel.org/lkml/CAEf4Bzb46=-J5Fxc3mMZ8JQPtK1uoE0q6+g6WPz53Cvx=CBEhw@mail.gmail.com
+    Link: https://lore.kernel.org/bpf/20210928230946.4062144-3-keescook@chromium.org
+
+commit 3d717fad5081b8e3bda76d86907fad95398cbde8
+Author: Kees Cook <keescook@chromium.org>
+Date:   Tue Sep 28 16:09:45 2021 -0700
+
+    bpf: Replace "want address" users of BPF_CAST_CALL with BPF_CALL_IMM
+    
+    In order to keep ahead of cases in the kernel where Control Flow
+    Integrity (CFI) may trip over function call casts, enabling
+    -Wcast-function-type is helpful. To that end, BPF_CAST_CALL causes
+    various warnings and is one of the last places in the kernel triggering
+    this warning.
+    
+    Most places using BPF_CAST_CALL actually just want a void * to perform
+    math on. It's not actually performing a call, so just use a different
+    helper to get the void *, by way of the new BPF_CALL_IMM() helper, which
+    can clean up a common copy/paste idiom as well.
+    
+    This change results in no object code difference.
+    
+    Signed-off-by: Kees Cook <keescook@chromium.org>
+    Signed-off-by: Alexei Starovoitov <ast@kernel.org>
+    Reviewed-by: Gustavo A. R. Silva <gustavoars@kernel.org>
+    Acked-by: Andrii Nakryiko <andrii@kernel.org>
+    Link: https://github.com/KSPP/linux/issues/20
+    Link: https://lore.kernel.org/lkml/CAEf4Bzb46=-J5Fxc3mMZ8JQPtK1uoE0q6+g6WPz53Cvx=CBEhw@mail.gmail.com
+    Link: https://lore.kernel.org/bpf/20210928230946.4062144-2-keescook@chromium.org
+
+commit 4f0f586bf0c898233d8f316f471a21db2abd522d
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Thu Apr 8 11:28:34 2021 -0700
+
+    treewide: Change list_sort to use const pointers
+    
+    list_sort() internally casts the comparison function passed to it
+    to a different type with constant struct list_head pointers, and
+    uses this pointer to call the functions, which trips indirect call
+    Control-Flow Integrity (CFI) checking.
+    
+    Instead of removing the consts, this change defines the
+    list_cmp_func_t type and changes the comparison function types of
+    all list_sort() callers to use const pointers, thus avoiding type
+    mismatches.
+    
+    Suggested-by: Nick Desaulniers <ndesaulniers@google.com>
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Reviewed-by: Nick Desaulniers <ndesaulniers@google.com>
+    Reviewed-by: Christoph Hellwig <hch@lst.de>
+    Reviewed-by: Kees Cook <keescook@chromium.org>
+    Tested-by: Nick Desaulniers <ndesaulniers@google.com>
+    Tested-by: Nathan Chancellor <nathan@kernel.org>
+    Signed-off-by: Kees Cook <keescook@chromium.org>
+    Link: https://lore.kernel.org/r/20210408182843.1754385-10-samitolvanen@google.com
+
+commit cf68fffb66d60d96209446bfc4a15291dc5a5d41
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Thu Apr 8 11:28:26 2021 -0700
+
+    add support for Clang CFI
+    
+    This change adds support for Clang’s forward-edge Control Flow
+    Integrity (CFI) checking. With CONFIG_CFI_CLANG, the compiler
+    injects a runtime check before each indirect function call to ensure
+    the target is a valid function with the correct static type. This
+    restricts possible call targets and makes it more difficult for
+    an attacker to exploit bugs that allow the modification of stored
+    function pointers. For more details, see:
+    
+      https://clang.llvm.org/docs/ControlFlowIntegrity.html
+    
+    Clang requires CONFIG_LTO_CLANG to be enabled with CFI to gain
+    visibility to possible call targets. Kernel modules are supported
+    with Clang’s cross-DSO CFI mode, which allows checking between
+    independently compiled components.
+    
+    With CFI enabled, the compiler injects a __cfi_check() function into
+    the kernel and each module for validating local call targets. For
+    cross-module calls that cannot be validated locally, the compiler
+    calls the global __cfi_slowpath_diag() function, which determines
+    the target module and calls the correct __cfi_check() function. This
+    patch includes a slowpath implementation that uses __module_address()
+    to resolve call targets, and with CONFIG_CFI_CLANG_SHADOW enabled, a
+    shadow map that speeds up module look-ups by ~3x.
+    
+    Clang implements indirect call checking using jump tables and
+    offers two methods of generating them. With canonical jump tables,
+    the compiler renames each address-taken function to <function>.cfi
+    and points the original symbol to a jump table entry, which passes
+    __cfi_check() validation. This isn’t compatible with stand-alone
+    assembly code, which the compiler doesn’t instrument, and would
+    result in indirect calls to assembly code to fail. Therefore, we
+    default to using non-canonical jump tables instead, where the compiler
+    generates a local jump table entry <function>.cfi_jt for each
+    address-taken function, and replaces all references to the function
+    with the address of the jump table entry.
+    
+    Note that because non-canonical jump table addresses are local
+    to each component, they break cross-module function address
+    equality. Specifically, the address of a global function will be
+    different in each module, as it's replaced with the address of a local
+    jump table entry. If this address is passed to a different module,
+    it won’t match the address of the same function taken there. This
+    may break code that relies on comparing addresses passed from other
+    components.
+    
+    CFI checking can be disabled in a function with the __nocfi attribute.
+    Additionally, CFI can be disabled for an entire compilation unit by
+    filtering out CC_FLAGS_CFI.
+    
+    By default, CFI failures result in a kernel panic to stop a potential
+    exploit. CONFIG_CFI_PERMISSIVE enables a permissive mode, where the
+    kernel prints out a rate-limited warning instead, and allows execution
+    to continue. This option is helpful for locating type mismatches, but
+    should only be enabled during development.
+    
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Reviewed-by: Kees Cook <keescook@chromium.org>
+    Tested-by: Nathan Chancellor <nathan@kernel.org>
+    Signed-off-by: Kees Cook <keescook@chromium.org>
+    Link: https://lore.kernel.org/r/20210408182843.1754385-2-samitolvanen@google.com
+
+commit c9c324dc22aab1687da37001b321b6dfa93a0699
+Author: Josh Poimboeuf <jpoimboe@redhat.com>
+Date:   Fri Dec 18 14:26:21 2020 -0600
+
+    objtool: Support stack layout changes in alternatives
+    
+    The ORC unwinder showed a warning [1] which revealed the stack layout
+    didn't match what was expected.  The problem was that paravirt patching
+    had replaced "CALL *pv_ops.irq.save_fl" with "PUSHF;POP".  That changed
+    the stack layout between the PUSHF and the POP, so unwinding from an
+    interrupt which occurred between those two instructions would fail.
+    
+    Part of the agreed upon solution was to rework the custom paravirt
+    patching code to use alternatives instead, since objtool already knows
+    how to read alternatives (and converging runtime patching infrastructure
+    is always a good thing anyway).  But the main problem still remains,
+    which is that runtime patching can change the stack layout.
+    
+    Making stack layout changes in alternatives was disallowed with commit
+    7117f16bf460 ("objtool: Fix ORC vs alternatives"), but now that paravirt
+    is going to be doing it, it needs to be supported.
+    
+    One way to do so would be to modify the ORC table when the code gets
+    patched.  But ORC is simple -- a good thing! -- and it's best to leave
+    it alone.
+    
+    Instead, support stack layout changes by "flattening" all possible stack
+    states (CFI) from parallel alternative code streams into a single set of
+    linear states.  The only necessary limitation is that CFI conflicts are
+    disallowed at all possible instruction boundaries.
+    
+    For example, this scenario is allowed:
+    
+              Alt1                    Alt2                    Alt3
+    
+       0x00   CALL *pv_ops.save_fl    CALL xen_save_fl        PUSHF
+       0x01                                                   POP %RAX
+       0x02                                                   NOP
+       ...
+       0x05                           NOP
+       ...
+       0x07   <insn>
+    
+    The unwind information for offset-0x00 is identical for all 3
+    alternatives.  Similarly offset-0x05 and higher also are identical (and
+    the same as 0x00).  However offset-0x01 has deviating CFI, but that is
+    only relevant for Alt3, neither of the other alternative instruction
+    streams will ever hit that offset.
+    
+    This scenario is NOT allowed:
+    
+              Alt1                    Alt2
+    
+       0x00   CALL *pv_ops.save_fl    PUSHF
+       0x01                           NOP6
+       ...
+       0x07   NOP                     POP %RAX
+    
+    The problem here is that offset-0x7, which is an instruction boundary in
+    both possible instruction patch streams, has two conflicting stack
+    layouts.
+    
+    [ The above examples were stolen from Peter Zijlstra. ]
+    
+    The new flattened CFI array is used both for the detection of conflicts
+    (like the second example above) and the generation of linear ORC
+    entries.
+    
+    BTW, another benefit of these changes is that, thanks to some related
+    cleanups (new fake nops and alt_group struct) objtool can finally be rid
+    of fake jumps, which were a constant source of headaches.
+    
+    [1] https://lkml.kernel.org/r/20201111170536.arx2zbn4ngvjoov7@treble
+    
+    Cc: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+    Signed-off-by: Josh Poimboeuf <jpoimboe@redhat.com>
+
+commit 32fc4a9ad56f8260025ac766548d625509cc879f
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Tue Nov 17 12:59:02 2020 -0800
+
+    cfg80211: fix callback type mismatches in wext-compat
+    
+    Instead of casting callback functions to type iw_handler, which trips
+    indirect call checking with Clang's Control-Flow Integrity (CFI), add
+    stub functions with the correct function type for the callbacks.
+    
+    Reported-by: Sedat Dilek <sedat.dilek@gmail.com>
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Reviewed-by: Kees Cook <keescook@chromium.org>
+    Link: https://lore.kernel.org/r/20201117205902.405316-1-samitolvanen@google.com
+    Signed-off-by: Johannes Berg <johannes.berg@intel.com>
+
+commit 83321c335dccba262a57378361d63da96b8166d6
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Mon Nov 30 11:39:00 2020 -0800
+
+    x86/pci: Fix the function type for check_reserved_t
+    
+    e820__mapped_all() is passed as a callback to is_mmconf_reserved(),
+    which expects a function of type:
+    
+      typedef bool (*check_reserved_t)(u64 start, u64 end, unsigned type);
+    
+    However, e820__mapped_all() accepts enum e820_type as the last argument
+    and this type mismatch trips indirect call checking with Clang's
+    Control-Flow Integrity (CFI).
+    
+    As is_mmconf_reserved() only passes enum e820_type values for the
+    type argument, change the typedef and the unused type argument in
+    is_acpi_reserved() to enum e820_type to fix the type mismatch.
+    
+    Reported-by: Sedat Dilek <sedat.dilek@gmail.com>
+    Suggested-by: Borislav Petkov <bp@alien8.de>
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Signed-off-by: Borislav Petkov <bp@suse.de>
+    Link: https://lkml.kernel.org/r/20201130193900.456726-1-samitolvanen@google.com
+
+commit ebd19fc372e3e78bf165f230e7c084e304441c08
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Fri Nov 13 10:31:26 2020 -0800
+
+    perf/x86: fix sysfs type mismatches
+    
+    This change switches rapl to use PMU_FORMAT_ATTR, and fixes two other
+    macros to use device_attribute instead of kobj_attribute to avoid
+    callback type mismatches that trip indirect call checking with Clang's
+    Control-Flow Integrity (CFI).
+    
+    Reported-by: Sedat Dilek <sedat.dilek@gmail.com>
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+    Reviewed-by: Kees Cook <keescook@chromium.org>
+    Link: https://lkml.kernel.org/r/20201113183126.1239404-1-samitolvanen@google.com
+
+commit a7b3474cbb2864d5500d5e4f48dd57c903975cab
+Author: Thomas Gleixner <tglx@linutronix.de>
+Date:   Tue Sep 22 09:58:52 2020 +0200
+
+    x86/irq: Make run_on_irqstack_cond() typesafe
+    
+    Sami reported that run_on_irqstack_cond() requires the caller to cast
+    functions to mismatching types, which trips indirect call Control-Flow
+    Integrity (CFI) in Clang.
+    
+    Instead of disabling CFI on that function, provide proper helpers for
+    the three call variants. The actual ASM code stays the same as that is
+    out of reach.
+    
+     [ bp: Fix __run_on_irqstack() prototype to match. ]
+    
+    Fixes: 931b94145981 ("x86/entry: Provide helpers for executing on the irqstack")
+    Reported-by: Nathan Chancellor <natechancellor@gmail.com>
+    Reported-by: Sami Tolvanen <samitolvanen@google.com>
+    Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+    Signed-off-by: Borislav Petkov <bp@suse.de>
+    Tested-by: Sami Tolvanen <samitolvanen@google.com>
+    Cc: <stable@vger.kernel.org>
+    Link: https://github.com/ClangBuiltLinux/linux/issues/1052
+    Link: https://lkml.kernel.org/r/87pn6eb5tv.fsf@nanos.tec.linutronix.de
+
+commit 1146f7e2dc15a227a7e1ef9a1fb67182b25e687f
+Author: Luca Stefani <luca.stefani.ge1@gmail.com>
+Date:   Thu Aug 6 23:17:53 2020 -0700
+
+    ntfs: fix ntfs_test_inode and ntfs_init_locked_inode function type
+    
+    Clang's Control Flow Integrity (CFI) is a security mechanism that can help
+    prevent JOP chains, deployed extensively in downstream kernels used in
+    Android.
+    
+    Its deployment is hindered by mismatches in function signatures.  For this
+    case, we make callbacks match their intended function signature, and cast
+    parameters within them rather than casting the callback when passed as a
+    parameter.
+    
+    When running `mount -t ntfs ...` we observe the following trace:
+    
+    Call trace:
+    __cfi_check_fail+0x1c/0x24
+    name_to_dev_t+0x0/0x404
+    iget5_locked+0x594/0x5e8
+    ntfs_fill_super+0xbfc/0x43ec
+    mount_bdev+0x30c/0x3cc
+    ntfs_mount+0x18/0x24
+    mount_fs+0x1b0/0x380
+    vfs_kern_mount+0x90/0x398
+    do_mount+0x5d8/0x1a10
+    SyS_mount+0x108/0x144
+    el0_svc_naked+0x34/0x38
+    
+    Signed-off-by: Luca Stefani <luca.stefani.ge1@gmail.com>
+    Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+    Tested-by: freak07 <michalechner92@googlemail.com>
+    Reviewed-by: Nick Desaulniers <ndesaulniers@google.com>
+    Reviewed-by: Nathan Chancellor <natechancellor@gmail.com>
+    Acked-by: Anton Altaparmakov <anton@tuxera.com>
+    Link: http://lkml.kernel.org/r/20200718112513.533800-1-luca.stefani.ge1@gmail.com
+    Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+
+commit efe9711214e6138a5a2a46ca4068bfce50c03444
+Author: Neal Liu <neal.liu@mediatek.com>
+Date:   Mon Jul 27 11:25:46 2020 +0800
+
+    cpuidle: change enter_s2idle() prototype
+    
+    Control Flow Integrity(CFI) is a security mechanism that disallows
+    changes to the original control flow graph of a compiled binary,
+    making it significantly harder to perform such attacks.
+    
+    init_state_node() assign same function callback to different
+    function pointer declarations.
+    
+    static int init_state_node(struct cpuidle_state *idle_state,
+                               const struct of_device_id *matches,
+                               struct device_node *state_node) { ...
+            idle_state->enter = match_id->data; ...
+            idle_state->enter_s2idle = match_id->data; }
+    
+    Function declarations:
+    
+    struct cpuidle_state { ...
+            int (*enter) (struct cpuidle_device *dev,
+                          struct cpuidle_driver *drv,
+                          int index);
+    
+            void (*enter_s2idle) (struct cpuidle_device *dev,
+                                  struct cpuidle_driver *drv,
+                                  int index); };
+    
+    In this case, either enter() or enter_s2idle() would cause CFI check
+    failed since they use same callee.
+    
+    Align function prototype of enter() since it needs return value for
+    some use cases. The return value of enter_s2idle() is no
+    need currently.
+    
+    Signed-off-by: Neal Liu <neal.liu@mediatek.com>
+    Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
+    Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+
+commit 4bc799dcb67066e0531004d5bdbe755bb02b5488
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Mon Jun 15 11:12:32 2020 -0700
+
+    security: fix the key_permission LSM hook function type
+    
+    Commit 8c0637e950d6 ("keys: Make the KEY_NEED_* perms an enum rather than
+    a mask") changed the type of the key_permission callback functions, but
+    didn't change the type of the hook, which trips indirect call checking with
+    Control-Flow Integrity (CFI). This change fixes the issue by changing the
+    hook type to match the functions.
+    
+    Fixes: 8c0637e950d6 ("keys: Make the KEY_NEED_* perms an enum rather than a mask")
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Acked-by: Kees Cook <keescook@chromium.org>
+    Signed-off-by: James Morris <jmorris@namei.org>
+
+commit 7fdc66debebc6a7170a37c8c9b0d9585a9788fb4
+Author: Nathan Chancellor <nathan@kernel.org>
+Date:   Tue Apr 28 10:54:56 2020 -0700
+
+    hv_netvsc: Fix netvsc_start_xmit's return type
+    
+    netvsc_start_xmit is used as a callback function for the ndo_start_xmit
+    function pointer. ndo_start_xmit's return type is netdev_tx_t but
+    netvsc_start_xmit's return type is int.
+    
+    This causes a failure with Control Flow Integrity (CFI), which requires
+    function pointer prototypes and callback function definitions to match
+    exactly. When CFI is in enforcing, the kernel panics. When booting a
+    CFI kernel with WSL 2, the VM is immediately terminated because of this.
+    
+    The splat when CONFIG_CFI_PERMISSIVE is used:
+    
+    [    5.916765] CFI failure (target: netvsc_start_xmit+0x0/0x10):
+    [    5.916771] WARNING: CPU: 8 PID: 0 at kernel/cfi.c:29 __cfi_check_fail+0x2e/0x40
+    [    5.916772] Modules linked in:
+    [    5.916774] CPU: 8 PID: 0 Comm: swapper/8 Not tainted 5.7.0-rc3-next-20200424-microsoft-cbl-00001-ged4eb37d2c69-dirty #1
+    [    5.916776] RIP: 0010:__cfi_check_fail+0x2e/0x40
+    [    5.916777] Code: 48 c7 c7 70 98 63 a9 48 c7 c6 11 db 47 a9 e8 69 55 59 00 85 c0 75 02 5b c3 48 c7 c7 73 c6 43 a9 48 89 de 31 c0 e8 12 2d f0 ff <0f> 0b 5b c3 00 00 cc cc 00 00 cc cc 00 00 cc cc 00 00 85 f6 74 25
+    [    5.916778] RSP: 0018:ffffa803c0260b78 EFLAGS: 00010246
+    [    5.916779] RAX: 712a1af25779e900 RBX: ffffffffa8cf7950 RCX: ffffffffa962cf08
+    [    5.916779] RDX: ffffffffa9c36b60 RSI: 0000000000000082 RDI: ffffffffa9c36b5c
+    [    5.916780] RBP: ffff8ffc4779c2c0 R08: 0000000000000001 R09: ffffffffa9c3c300
+    [    5.916781] R10: 0000000000000151 R11: ffffffffa9c36b60 R12: ffff8ffe39084000
+    [    5.916782] R13: ffffffffa8cf7950 R14: ffffffffa8d12cb0 R15: ffff8ffe39320140
+    [    5.916784] FS:  0000000000000000(0000) GS:ffff8ffe3bc00000(0000) knlGS:0000000000000000
+    [    5.916785] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+    [    5.916786] CR2: 00007ffef5749408 CR3: 00000002f4f5e000 CR4: 0000000000340ea0
+    [    5.916787] Call Trace:
+    [    5.916788]  <IRQ>
+    [    5.916790]  __cfi_check+0x3ab58/0x450e0
+    [    5.916793]  ? dev_hard_start_xmit+0x11f/0x160
+    [    5.916795]  ? sch_direct_xmit+0xf2/0x230
+    [    5.916796]  ? __dev_queue_xmit.llvm.11471227737707190958+0x69d/0x8e0
+    [    5.916797]  ? neigh_resolve_output+0xdf/0x220
+    [    5.916799]  ? neigh_connected_output.cfi_jt+0x8/0x8
+    [    5.916801]  ? ip6_finish_output2+0x398/0x4c0
+    [    5.916803]  ? nf_nat_ipv6_out+0x10/0xa0
+    [    5.916804]  ? nf_hook_slow+0x84/0x100
+    [    5.916807]  ? ip6_input_finish+0x8/0x8
+    [    5.916807]  ? ip6_output+0x6f/0x110
+    [    5.916808]  ? __ip6_local_out.cfi_jt+0x8/0x8
+    [    5.916810]  ? mld_sendpack+0x28e/0x330
+    [    5.916811]  ? ip_rt_bug+0x8/0x8
+    [    5.916813]  ? mld_ifc_timer_expire+0x2db/0x400
+    [    5.916814]  ? neigh_proxy_process+0x8/0x8
+    [    5.916816]  ? call_timer_fn+0x3d/0xd0
+    [    5.916817]  ? __run_timers+0x2a9/0x300
+    [    5.916819]  ? rcu_core_si+0x8/0x8
+    [    5.916820]  ? run_timer_softirq+0x14/0x30
+    [    5.916821]  ? __do_softirq+0x154/0x262
+    [    5.916822]  ? native_x2apic_icr_write+0x8/0x8
+    [    5.916824]  ? irq_exit+0xba/0xc0
+    [    5.916825]  ? hv_stimer0_vector_handler+0x99/0xe0
+    [    5.916826]  ? hv_stimer0_callback_vector+0xf/0x20
+    [    5.916826]  </IRQ>
+    [    5.916828]  ? hv_stimer_global_cleanup.cfi_jt+0x8/0x8
+    [    5.916829]  ? raw_setsockopt+0x8/0x8
+    [    5.916830]  ? default_idle+0xe/0x10
+    [    5.916832]  ? do_idle.llvm.10446269078108580492+0xb7/0x130
+    [    5.916833]  ? raw_setsockopt+0x8/0x8
+    [    5.916833]  ? cpu_startup_entry+0x15/0x20
+    [    5.916835]  ? cpu_hotplug_enable.cfi_jt+0x8/0x8
+    [    5.916836]  ? start_secondary+0x188/0x190
+    [    5.916837]  ? secondary_startup_64+0xa5/0xb0
+    [    5.916838] ---[ end trace f2683fa869597ba5 ]---
+    
+    Avoid this by using the right return type for netvsc_start_xmit.
+    
+    Fixes: fceaf24a943d8 ("Staging: hv: add the Hyper-V virtual network driver")
+    Link: https://github.com/ClangBuiltLinux/linux/issues/1009
+    Signed-off-by: Nathan Chancellor <natechancellor@gmail.com>
+    Reviewed-by: Haiyang Zhang <haiyangz@microsoft.com>
+    Signed-off-by: David S. Miller <davem@davemloft.net>
+
+commit 6320a15e98301b67ff9ba8512e1e3a4033007851
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Wed Nov 27 15:55:03 2019 -0800
+
+    crypto: arm64/sha - fix function types
+    
+    Instead of casting pointers to callback functions, add C wrappers
+    to avoid type mismatch failures with Control-Flow Integrity (CFI)
+    checking.
+    
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Reviewed-by: Ard Biesheuvel <ardb@kernel.org>
+    Reviewed-by: Eric Biggers <ebiggers@kernel.org>
+    Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
+
+commit cd4771f7709211082cbc41dc1f5b2be774ef1604
+Merge: a25bbc2644f0 f53e2cd0b8ab
+Author: Linus Torvalds <torvalds@linux-foundation.org>
+Date:   Tue Nov 26 09:25:36 2019 -0800
+
+    Merge branch 'x86-entry-for-linus' of git://git.kernel.org/pub/scm/linux/kernel/git/tip/tip
+    
+    Pull x86 syscall entry updates from Ingo Molnar:
+     "These changes relate to the preparatory cleanup of syscall function
+      type signatures - to fix indirect call mismatches with Control-Flow
+      Integrity (CFI) checking.
+    
+      No change in behavior intended"
+    
+    * 'x86-entry-for-linus' of git://git.kernel.org/pub/scm/linux/kernel/git/tip/tip:
+      x86/mm: Use the correct function type for native_set_fixmap()
+      syscalls/x86: Fix function types in COND_SYSCALL
+      syscalls/x86: Use the correct function type for sys_ni_syscall
+      syscalls/x86: Use COMPAT_SYSCALL_DEFINE0 for IA32 (rt_)sigreturn
+      syscalls/x86: Wire up COMPAT_SYSCALL_DEFINE0
+      syscalls/x86: Use the correct function type in SYSCALL_DEFINE0
+
+commit 492c88720d36eb662f9f10c1633f7726fbb07fc4
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Tue Nov 12 13:41:56 2019 -0800
+
+    driver core: platform: use the correct callback type for bus_find_device
+    
+    platform_find_device_by_driver calls bus_find_device and passes
+    platform_match as the callback function. Casting the function to a
+    mismatching type trips indirect call Control-Flow Integrity (CFI) checking.
+    
+    This change adds a callback function with the correct type and instead
+    of casting the function, explicitly casts the second parameter to struct
+    device_driver* as expected by platform_match.
+    
+    Fixes: 36f3313d6bff9 ("platform: Add platform_find_device_by_driver() helper")
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Reviewed-by: Kees Cook <keescook@chromium.org>
+    Cc: stable <stable@vger.kernel.org>
+    Link: https://lore.kernel.org/r/20191112214156.3430-1-samitolvanen@google.com
+    Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+commit f53e2cd0b8ab7d9e390414470bdbd830f660133f
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Fri Sep 13 14:14:02 2019 -0700
+
+    x86/mm: Use the correct function type for native_set_fixmap()
+    
+    We call native_set_fixmap indirectly through the function pointer
+    struct pv_mmu_ops::set_fixmap, which expects the first parameter to be
+    'unsigned' instead of 'enum fixed_addresses'. This patch changes the
+    function type for native_set_fixmap to match the pointer, which fixes
+    indirect call mismatches with Control-Flow Integrity (CFI) checking.
+    
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Reviewed-by: Kees Cook <keescook@chromium.org>
+    Cc: Andy Lutomirski <luto@kernel.org>
+    Cc: Borislav Petkov <bp@alien8.de>
+    Cc: Dave Hansen <dave.hansen@linux.intel.com>
+    Cc: H . Peter Anvin <hpa@zytor.com>
+    Cc: H. Peter Anvin <hpa@zytor.com>
+    Cc: Linus Torvalds <torvalds@linux-foundation.org>
+    Cc: Peter Zijlstra <peterz@infradead.org>
+    Cc: Rik van Riel <riel@surriel.com>
+    Cc: Thomas Gleixner <tglx@linutronix.de>
+    Link: https://lkml.kernel.org/r/20190913211402.193018-1-samitolvanen@google.com
+    Signed-off-by: Ingo Molnar <mingo@kernel.org>
+
+commit 6e4847640c6aebcaa2d9b3686cecc91b41f09269
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Tue Oct 8 15:40:49 2019 -0700
+
+    syscalls/x86: Fix function types in COND_SYSCALL
+    
+    Define a weak function in COND_SYSCALL instead of a weak alias to
+    sys_ni_syscall(), which has an incompatible type. This fixes indirect
+    call mismatches with Control-Flow Integrity (CFI) checking.
+    
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Acked-by: Andy Lutomirski <luto@kernel.org>
+    Cc: Borislav Petkov <bp@alien8.de>
+    Cc: H . Peter Anvin <hpa@zytor.com>
+    Cc: Kees Cook <keescook@chromium.org>
+    Cc: Linus Torvalds <torvalds@linux-foundation.org>
+    Cc: Peter Zijlstra <peterz@infradead.org>
+    Cc: Thomas Gleixner <tglx@linutronix.de>
+    Link: https://lkml.kernel.org/r/20191008224049.115427-6-samitolvanen@google.com
+    Signed-off-by: Ingo Molnar <mingo@kernel.org>
+
+commit f48f01a92cca09e86d46c91d8edf9d5a71c61727
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Tue Oct 8 15:40:48 2019 -0700
+
+    syscalls/x86: Use the correct function type for sys_ni_syscall
+    
+    Use the correct function type for sys_ni_syscall() in system
+    call tables to fix indirect call mismatches with Control-Flow
+    Integrity (CFI) checking.
+    
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Acked-by: Andy Lutomirski <luto@kernel.org>
+    Cc: Borislav Petkov <bp@alien8.de>
+    Cc: H . Peter Anvin <hpa@zytor.com>
+    Cc: Kees Cook <keescook@chromium.org>
+    Cc: Linus Torvalds <torvalds@linux-foundation.org>
+    Cc: Peter Zijlstra <peterz@infradead.org>
+    Cc: Thomas Gleixner <tglx@linutronix.de>
+    Link: https://lkml.kernel.org/r/20191008224049.115427-5-samitolvanen@google.com
+    Signed-off-by: Ingo Molnar <mingo@kernel.org>
+
+commit 00198a6eaf66609de5e4de9163bb42c7ca9dd7b7
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Tue Oct 8 15:40:47 2019 -0700
+
+    syscalls/x86: Use COMPAT_SYSCALL_DEFINE0 for IA32 (rt_)sigreturn
+    
+    Use COMPAT_SYSCALL_DEFINE0 to define (rt_)sigreturn() syscalls to
+    replace sys32_sigreturn() and sys32_rt_sigreturn(). This fixes indirect
+    call mismatches with Control-Flow Integrity (CFI) checking.
+    
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Acked-by: Andy Lutomirski <luto@kernel.org>
+    Cc: Borislav Petkov <bp@alien8.de>
+    Cc: H . Peter Anvin <hpa@zytor.com>
+    Cc: Kees Cook <keescook@chromium.org>
+    Cc: Linus Torvalds <torvalds@linux-foundation.org>
+    Cc: Peter Zijlstra <peterz@infradead.org>
+    Cc: Thomas Gleixner <tglx@linutronix.de>
+    Link: https://lkml.kernel.org/r/20191008224049.115427-4-samitolvanen@google.com
+    Signed-off-by: Ingo Molnar <mingo@kernel.org>
+
+commit 8661d769ab77c675b5eb6c3351a372b9fbc1bf40
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Tue Oct 8 15:40:45 2019 -0700
+
+    syscalls/x86: Use the correct function type in SYSCALL_DEFINE0
+    
+    Although a syscall defined using SYSCALL_DEFINE0 doesn't accept
+    parameters, use the correct function type to avoid type mismatches
+    with Control-Flow Integrity (CFI) checking.
+    
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Acked-by: Andy Lutomirski <luto@kernel.org>
+    Cc: Borislav Petkov <bp@alien8.de>
+    Cc: H . Peter Anvin <hpa@zytor.com>
+    Cc: Kees Cook <keescook@chromium.org>
+    Cc: Linus Torvalds <torvalds@linux-foundation.org>
+    Cc: Peter Zijlstra <peterz@infradead.org>
+    Cc: Thomas Gleixner <tglx@linutronix.de>
+    Link: https://lkml.kernel.org/r/20191008224049.115427-2-samitolvanen@google.com
+    Signed-off-by: Ingo Molnar <mingo@kernel.org>
+
+commit c27eccfe4d6c7481ce99f1c433ca043ab464080a
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Tue Sep 10 15:40:44 2019 -0700
+
+    arm64: fix function types in COND_SYSCALL
+    
+    Define a weak function in COND_SYSCALL instead of a weak alias to
+    sys_ni_syscall, which has an incompatible type. This fixes indirect
+    call mismatches with Control-Flow Integrity (CFI) checking.
+    
+    Acked-by: Mark Rutland <mark.rutland@arm.com>
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Signed-off-by: Will Deacon <will@kernel.org>
+
+commit 05423b241311c9380b7280179295bac7794281b6
+Author: Eric Dumazet <eric.dumazet@gmail.com>
+Date:   Mon Oct 26 18:40:35 2009 -0700
+
+    vlan: allow null VLAN ID to be used
+    
+    We currently use a 16 bit field (vlan_tci) to store VLAN ID/PRIO on a skb.
+    
+    Null value is used as a special value, meaning vlan tagging not enabled.
+    This forbids use of null vlan ID.
+    
+    As pointed by David, some drivers use the 3 high order bits (PRIO)
+    
+    As VLAN ID is 12 bits, we can use the remaining bit (CFI) as a flag, and
+    allow null VLAN ID.
+    
+    In case future code really wants to use VLAN_CFI_MASK, we'll have to use
+    a bit outside of vlan_tci.
+    
+    #define VLAN_PRIO_MASK         0xe000 /* Priority Code Point */
+    #define VLAN_PRIO_SHIFT        13
+    #define VLAN_CFI_MASK          0x1000 /* Canonical Format Indicator */
+    #define VLAN_TAG_PRESENT       VLAN_CFI_MASK
+    #define VLAN_VID_MASK          0x0fff /* VLAN Identifier */
+    
+    Reported-by: Gertjan Hofman <gertjan_hofman@yahoo.com>
+    Signed-off-by: Eric Dumazet <eric.dumazet@gmail.com>
+    Signed-off-by: David S. Miller <davem@davemloft.net>
+commit 4f0f586bf0c898233d8f316f471a21db2abd522d
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Thu Apr 8 11:28:34 2021 -0700
+
+    treewide: Change list_sort to use const pointers
+    
+    list_sort() internally casts the comparison function passed to it
+    to a different type with constant struct list_head pointers, and
+    uses this pointer to call the functions, which trips indirect call
+    Control-Flow Integrity (CFI) checking.
+    
+    Instead of removing the consts, this change defines the
+    list_cmp_func_t type and changes the comparison function types of
+    all list_sort() callers to use const pointers, thus avoiding type
+    mismatches.
+    
+    Suggested-by: Nick Desaulniers <ndesaulniers@google.com>
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Reviewed-by: Nick Desaulniers <ndesaulniers@google.com>
+    Reviewed-by: Christoph Hellwig <hch@lst.de>
+    Reviewed-by: Kees Cook <keescook@chromium.org>
+    Tested-by: Nick Desaulniers <ndesaulniers@google.com>
+    Tested-by: Nathan Chancellor <nathan@kernel.org>
+    Signed-off-by: Kees Cook <keescook@chromium.org>
+    Link: https://lore.kernel.org/r/20210408182843.1754385-10-samitolvanen@google.com
+
+commit 2bf2346159bc99cf0679e25be20f4daca60f3f5c
+Author: Jindong Yue <jindong.yue@nxp.com>
+Date:   Wed Feb 24 13:58:25 2021 +0800
+
+    remoteproc: core: Remove casting to rproc_handle_resource_t
+    
+    There are four different callback functions that are used for the
+    rproc_handle_resource_t callback that all have different second
+    parameter types.
+    
+    rproc_handle_vdev -> struct fw_rsc_vdev
+    rproc_handle_trace -> struct fw_rsc_trace
+    rproc_handle_devmem -> struct fw_rsc_devmem
+    rproc_handle_carveout -> struct fw_rsc_carveout
+    
+    These callbacks are cast to rproc_handle_resource_t so that there is no
+    error about incompatible pointer types. Unfortunately, this is a Clang's
+    Control-Flow Integrity checking violation, which verifies that the
+    callback function's types match the prototypes exactly before jumping.
+    
+    [    7.275750] Kernel panic - not syncing: CFI failure (target: rproc_handle_vdev+0x0/0x4)
+    [    7.283763] CPU: 2 PID: 1 Comm: init Tainted: G         C O      5.4.70-03301-g527af2c96672 #17
+    [    7.292463] Hardware name: NXP i.MX8MPlus EVK board (DT)
+    [    7.297779] Call trace:
+    [    7.300232]  dump_backtrace.cfi_jt+0x0/0x4
+    [    7.304337]  show_stack+0x18/0x24
+    [    7.307660]  dump_stack+0xb8/0x114
+    [    7.311069]  panic+0x164/0x3d4
+    [    7.314130]  __ubsan_handle_cfi_check_fail_abort+0x0/0x14
+    [    7.319533]  perf_proc_update_handler+0x0/0xcc
+    [    7.323983]  __cfi_check+0x63278/0x6a290
+    [    7.327913]  rproc_boot+0x3f8/0x738
+    [    7.331404]  rproc_add+0x68/0x110
+    [    7.334738]  imx_rproc_probe+0x5e4/0x708 [imx_rproc]
+    [    7.339711]  platform_drv_probe+0xac/0xf0
+    [    7.343726]  really_probe+0x260/0x65c
+    [    7.347393]  driver_probe_device+0x64/0x100
+    [    7.351580]  device_driver_attach+0x6c/0xac
+    [    7.355766]  __driver_attach+0xdc/0x184
+    [    7.359609]  bus_for_each_dev+0x98/0x104
+    [    7.363537]  driver_attach+0x24/0x30
+    [    7.367117]  bus_add_driver+0x100/0x1e0
+    [    7.370958]  driver_register+0x78/0x114
+    [    7.374800]  __platform_driver_register+0x44/0x50
+    [    7.379514]  init_module+0x20/0xfe8 [imx_rproc]
+    [    7.384049]  do_one_initcall+0x190/0x348
+    [    7.387979]  do_init_module+0x5c/0x210
+    [    7.391731]  load_module+0x2fbc/0x3590
+    [    7.395485]  __arm64_sys_finit_module+0xb8/0xec
+    [    7.400025]  el0_svc_common+0xb4/0x19c
+    [    7.403777]  el0_svc_handler+0x74/0x98
+    [    7.407531]  el0_svc+0x8/0xc
+    [    7.410419] SMP: stopping secondary CPUs
+    [    7.414648] Kernel Offset: disabled
+    [    7.418142] CPU features: 0x00010002,2000200c
+    [    7.422501] Memory Limit: none
+    
+    To fix this, change the second parameter of all functions to void * and
+    use a local variable with the correct type so that everything works
+    properly. With this, we can remove casting to rproc_handle_resource_t
+    for these functions.
+    
+    Signed-off-by: Jindong Yue <jindong.yue@nxp.com>
+    Reviewed-by: Peng Fan <peng.fan@nxp.com>
+    Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
+    Reviewed-by: Mathieu Poirier <mathieu.poirier@linaro.org>
+    Link: https://lore.kernel.org/r/20210224055825.7417-1-jindong.yue@nxp.com
+    Signed-off-by: Bjorn Andersson <bjorn.andersson@linaro.org>
+
+commit 32fc4a9ad56f8260025ac766548d625509cc879f
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Tue Nov 17 12:59:02 2020 -0800
+
+    cfg80211: fix callback type mismatches in wext-compat
+    
+    Instead of casting callback functions to type iw_handler, which trips
+    indirect call checking with Clang's Control-Flow Integrity (CFI), add
+    stub functions with the correct function type for the callbacks.
+    
+    Reported-by: Sedat Dilek <sedat.dilek@gmail.com>
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Reviewed-by: Kees Cook <keescook@chromium.org>
+    Link: https://lore.kernel.org/r/20201117205902.405316-1-samitolvanen@google.com
+    Signed-off-by: Johannes Berg <johannes.berg@intel.com>
+
+commit 83321c335dccba262a57378361d63da96b8166d6
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Mon Nov 30 11:39:00 2020 -0800
+
+    x86/pci: Fix the function type for check_reserved_t
+    
+    e820__mapped_all() is passed as a callback to is_mmconf_reserved(),
+    which expects a function of type:
+    
+      typedef bool (*check_reserved_t)(u64 start, u64 end, unsigned type);
+    
+    However, e820__mapped_all() accepts enum e820_type as the last argument
+    and this type mismatch trips indirect call checking with Clang's
+    Control-Flow Integrity (CFI).
+    
+    As is_mmconf_reserved() only passes enum e820_type values for the
+    type argument, change the typedef and the unused type argument in
+    is_acpi_reserved() to enum e820_type to fix the type mismatch.
+    
+    Reported-by: Sedat Dilek <sedat.dilek@gmail.com>
+    Suggested-by: Borislav Petkov <bp@alien8.de>
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Signed-off-by: Borislav Petkov <bp@suse.de>
+    Link: https://lkml.kernel.org/r/20201130193900.456726-1-samitolvanen@google.com
+
+commit 983df5f2699f83f78643b19d3399b160d1e64f5b
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Fri Nov 13 10:34:14 2020 -0800
+
+    samples/ftrace: Mark my_tramp[12]? global
+    
+    my_tramp[12]? are declared as global functions in C, but they are not
+    marked global in the inline assembly definition. This mismatch confuses
+    Clang's Control-Flow Integrity checking. Fix the definitions by adding
+    .globl.
+    
+    Link: https://lkml.kernel.org/r/20201113183414.1446671-1-samitolvanen@google.com
+    
+    Fixes: 9d907f1ae80b8 ("ftrace/samples: Add a sample module that implements modify_ftrace_direct()")
+    Reviewed-by: Kees Cook <keescook@chromium.org>
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+
+commit ebd19fc372e3e78bf165f230e7c084e304441c08
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Fri Nov 13 10:31:26 2020 -0800
+
+    perf/x86: fix sysfs type mismatches
+    
+    This change switches rapl to use PMU_FORMAT_ATTR, and fixes two other
+    macros to use device_attribute instead of kobj_attribute to avoid
+    callback type mismatches that trip indirect call checking with Clang's
+    Control-Flow Integrity (CFI).
+    
+    Reported-by: Sedat Dilek <sedat.dilek@gmail.com>
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+    Reviewed-by: Kees Cook <keescook@chromium.org>
+    Link: https://lkml.kernel.org/r/20201113183126.1239404-1-samitolvanen@google.com
+
+commit 4bc799dcb67066e0531004d5bdbe755bb02b5488
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Mon Jun 15 11:12:32 2020 -0700
+
+    security: fix the key_permission LSM hook function type
+    
+    Commit 8c0637e950d6 ("keys: Make the KEY_NEED_* perms an enum rather than
+    a mask") changed the type of the key_permission callback functions, but
+    didn't change the type of the hook, which trips indirect call checking with
+    Control-Flow Integrity (CFI). This change fixes the issue by changing the
+    hook type to match the functions.
+    
+    Fixes: 8c0637e950d6 ("keys: Make the KEY_NEED_* perms an enum rather than a mask")
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Acked-by: Kees Cook <keescook@chromium.org>
+    Signed-off-by: James Morris <jmorris@namei.org>
+
+commit 6320a15e98301b67ff9ba8512e1e3a4033007851
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Wed Nov 27 15:55:03 2019 -0800
+
+    crypto: arm64/sha - fix function types
+    
+    Instead of casting pointers to callback functions, add C wrappers
+    to avoid type mismatch failures with Control-Flow Integrity (CFI)
+    checking.
+    
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Reviewed-by: Ard Biesheuvel <ardb@kernel.org>
+    Reviewed-by: Eric Biggers <ebiggers@kernel.org>
+    Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
+
+commit 492c88720d36eb662f9f10c1633f7726fbb07fc4
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Tue Nov 12 13:41:56 2019 -0800
+
+    driver core: platform: use the correct callback type for bus_find_device
+    
+    platform_find_device_by_driver calls bus_find_device and passes
+    platform_match as the callback function. Casting the function to a
+    mismatching type trips indirect call Control-Flow Integrity (CFI) checking.
+    
+    This change adds a callback function with the correct type and instead
+    of casting the function, explicitly casts the second parameter to struct
+    device_driver* as expected by platform_match.
+    
+    Fixes: 36f3313d6bff9 ("platform: Add platform_find_device_by_driver() helper")
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Reviewed-by: Kees Cook <keescook@chromium.org>
+    Cc: stable <stable@vger.kernel.org>
+    Link: https://lore.kernel.org/r/20191112214156.3430-1-samitolvanen@google.com
+    Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+commit f53e2cd0b8ab7d9e390414470bdbd830f660133f
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Fri Sep 13 14:14:02 2019 -0700
+
+    x86/mm: Use the correct function type for native_set_fixmap()
+    
+    We call native_set_fixmap indirectly through the function pointer
+    struct pv_mmu_ops::set_fixmap, which expects the first parameter to be
+    'unsigned' instead of 'enum fixed_addresses'. This patch changes the
+    function type for native_set_fixmap to match the pointer, which fixes
+    indirect call mismatches with Control-Flow Integrity (CFI) checking.
+    
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Reviewed-by: Kees Cook <keescook@chromium.org>
+    Cc: Andy Lutomirski <luto@kernel.org>
+    Cc: Borislav Petkov <bp@alien8.de>
+    Cc: Dave Hansen <dave.hansen@linux.intel.com>
+    Cc: H . Peter Anvin <hpa@zytor.com>
+    Cc: H. Peter Anvin <hpa@zytor.com>
+    Cc: Linus Torvalds <torvalds@linux-foundation.org>
+    Cc: Peter Zijlstra <peterz@infradead.org>
+    Cc: Rik van Riel <riel@surriel.com>
+    Cc: Thomas Gleixner <tglx@linutronix.de>
+    Link: https://lkml.kernel.org/r/20190913211402.193018-1-samitolvanen@google.com
+    Signed-off-by: Ingo Molnar <mingo@kernel.org>
+
+commit 6e4847640c6aebcaa2d9b3686cecc91b41f09269
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Tue Oct 8 15:40:49 2019 -0700
+
+    syscalls/x86: Fix function types in COND_SYSCALL
+    
+    Define a weak function in COND_SYSCALL instead of a weak alias to
+    sys_ni_syscall(), which has an incompatible type. This fixes indirect
+    call mismatches with Control-Flow Integrity (CFI) checking.
+    
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Acked-by: Andy Lutomirski <luto@kernel.org>
+    Cc: Borislav Petkov <bp@alien8.de>
+    Cc: H . Peter Anvin <hpa@zytor.com>
+    Cc: Kees Cook <keescook@chromium.org>
+    Cc: Linus Torvalds <torvalds@linux-foundation.org>
+    Cc: Peter Zijlstra <peterz@infradead.org>
+    Cc: Thomas Gleixner <tglx@linutronix.de>
+    Link: https://lkml.kernel.org/r/20191008224049.115427-6-samitolvanen@google.com
+    Signed-off-by: Ingo Molnar <mingo@kernel.org>
+
+commit 00198a6eaf66609de5e4de9163bb42c7ca9dd7b7
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Tue Oct 8 15:40:47 2019 -0700
+
+    syscalls/x86: Use COMPAT_SYSCALL_DEFINE0 for IA32 (rt_)sigreturn
+    
+    Use COMPAT_SYSCALL_DEFINE0 to define (rt_)sigreturn() syscalls to
+    replace sys32_sigreturn() and sys32_rt_sigreturn(). This fixes indirect
+    call mismatches with Control-Flow Integrity (CFI) checking.
+    
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Acked-by: Andy Lutomirski <luto@kernel.org>
+    Cc: Borislav Petkov <bp@alien8.de>
+    Cc: H . Peter Anvin <hpa@zytor.com>
+    Cc: Kees Cook <keescook@chromium.org>
+    Cc: Linus Torvalds <torvalds@linux-foundation.org>
+    Cc: Peter Zijlstra <peterz@infradead.org>
+    Cc: Thomas Gleixner <tglx@linutronix.de>
+    Link: https://lkml.kernel.org/r/20191008224049.115427-4-samitolvanen@google.com
+    Signed-off-by: Ingo Molnar <mingo@kernel.org>
+
+commit 8661d769ab77c675b5eb6c3351a372b9fbc1bf40
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Tue Oct 8 15:40:45 2019 -0700
+
+    syscalls/x86: Use the correct function type in SYSCALL_DEFINE0
+    
+    Although a syscall defined using SYSCALL_DEFINE0 doesn't accept
+    parameters, use the correct function type to avoid type mismatches
+    with Control-Flow Integrity (CFI) checking.
+    
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Acked-by: Andy Lutomirski <luto@kernel.org>
+    Cc: Borislav Petkov <bp@alien8.de>
+    Cc: H . Peter Anvin <hpa@zytor.com>
+    Cc: Kees Cook <keescook@chromium.org>
+    Cc: Linus Torvalds <torvalds@linux-foundation.org>
+    Cc: Peter Zijlstra <peterz@infradead.org>
+    Cc: Thomas Gleixner <tglx@linutronix.de>
+    Link: https://lkml.kernel.org/r/20191008224049.115427-2-samitolvanen@google.com
+    Signed-off-by: Ingo Molnar <mingo@kernel.org>
+
+commit c27eccfe4d6c7481ce99f1c433ca043ab464080a
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Tue Sep 10 15:40:44 2019 -0700
+
+    arm64: fix function types in COND_SYSCALL
+    
+    Define a weak function in COND_SYSCALL instead of a weak alias to
+    sys_ni_syscall, which has an incompatible type. This fixes indirect
+    call mismatches with Control-Flow Integrity (CFI) checking.
+    
+    Acked-by: Mark Rutland <mark.rutland@arm.com>
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Signed-off-by: Will Deacon <will@kernel.org>
+
+commit d322a8e5e3e9742fa6b76a207e5df57e03f318f9
+Author: Christoph Hellwig <hch@lst.de>
+Date:   Thu Jul 11 20:55:17 2019 -0700
+
+    mm/filemap.c: fix an overly long line in read_cache_page
+    
+    Patch series "fix filler_t callback type mismatches", v2.
+    
+    Casting mapping->a_ops->readpage to filler_t causes an indirect call
+    type mismatch with Control-Flow Integrity checking.  This change fixes
+    the mismatch in read_cache_page_gfp and read_mapping_page by adding
+    using a NULL filler argument as an indication to call ->readpage
+    directly, and by passing the right parameter callbacks in nfs and jffs2.
+    
+    This patch (of 4):
+    
+    Code cleanup.
+    
+    Link: http://lkml.kernel.org/r/20190520055731.24538-2-hch@lst.de
+    Signed-off-by: Christoph Hellwig <hch@lst.de>
+    Reviewed-by: Kees Cook <keescook@chromium.org>
+    Cc: Nick Desaulniers <ndesaulniers@google.com>
+    Cc: Sami Tolvanen <samitolvanen@google.com>
+    Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+    Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+
+commit 1e29ab3186e33c77dbb2d7566172a205b59fa390
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Fri May 24 15:11:18 2019 -0700
+
+    arm64: use the correct function type for __arm64_sys_ni_syscall
+    
+    Calling sys_ni_syscall through a syscall_fn_t pointer trips indirect
+    call Control-Flow Integrity checking due to a function type
+    mismatch. Use SYSCALL_DEFINE0 for __arm64_sys_ni_syscall instead and
+    remove the now unnecessary casts.
+    
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Signed-off-by: Will Deacon <will.deacon@arm.com>
+
+commit 0e358bd7b7ebd27e491dabed938eae254c17fe3b
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Fri May 24 15:11:17 2019 -0700
+
+    arm64: use the correct function type in SYSCALL_DEFINE0
+    
+    Although a syscall defined using SYSCALL_DEFINE0 doesn't accept
+    parameters, use the correct function type to avoid indirect call
+    type mismatches with Control-Flow Integrity checking.
+    
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Signed-off-by: Will Deacon <will.deacon@arm.com>
+
+commit 8ef8f368ce72b5e17f7c1f1ef15c38dcfd0fef64
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Fri May 24 15:11:16 2019 -0700
+
+    arm64: fix syscall_fn_t type
+    
+    Syscall wrappers in <asm/syscall_wrapper.h> use const struct pt_regs *
+    as the argument type. Use const in syscall_fn_t as well to fix indirect
+    call type mismatches with Control-Flow Integrity checking.
+    
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Reviewed-by: Mark Rutland <mark.rutland@arm.com>
+    Signed-off-by: Will Deacon <will.deacon@arm.com>
+
+commit 3ad3b7a2ebaefae37a7eafed0779324987ca5e56
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Tue May 8 13:56:12 2018 -0400
+
+    media: v4l2-ioctl: replace IOCTL_INFO_STD with stub functions
+    
+    This change removes IOCTL_INFO_STD and adds stub functions where
+    needed using the DEFINE_V4L_STUB_FUNC macro. This fixes indirect call
+    mismatches with Control-Flow Integrity, caused by calling standard
+    ioctls using a function pointer that doesn't match the function type.
+    
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Signed-off-by: Hans Verkuil <hansverk@cisco.com>
+    Signed-off-by: Mauro Carvalho Chehab <mchehab+samsung@kernel.org>
+
+commit daa36370b62428cca6d48d1b2530a8419f631c8c
+Author: Sami Tolvanen <samitolvanen@google.com>
+Date:   Mon May 7 14:09:46 2018 -0400
+
+    media: media-device: fix ioctl function types
+    
+    This change fixes function types for media device ioctls to avoid
+    indirect call mismatches with Control-Flow Integrity checking.
+    
+    Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+    Acked-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+    Signed-off-by: Hans Verkuil <hans.verkuil@cisco.com>
+    Signed-off-by: Mauro Carvalho Chehab <mchehab+samsung@kernel.org>

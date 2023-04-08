@@ -1,0 +1,2993 @@
+commit: d2a02e3c8bb6b347818518edff5a4b40ff52d6d8
+lib/crypto: blake2s: avoid indirect calls to compression function for Clang CFI
+
+blake2s_compress_generic is weakly aliased by blake2s_compress. The
+current harness for function selection uses a function pointer, which is
+ordinarily inlined and resolved at compile time. But when Clang's CFI is
+enabled, CFI still triggers when making an indirect call via a weak
+symbol. This seems like a bug in Clang's CFI, as though it's bucketing
+weak symbols and strong symbols differently. It also only seems to
+trigger when "full LTO" mode is used, rather than "thin LTO".
+
+[    0.000000][    T0] Kernel panic - not syncing: CFI failure (target: blake2s_compress_generic+0x0/0x1444)
+[    0.000000][    T0] CPU: 0 PID: 0 Comm: swapper/0 Not tainted 5.16.0-mainline-06981-g076c855b846e #1
+[    0.000000][    T0] Hardware name: MT6873 (DT)
+[    0.000000][    T0] Call trace:
+[    0.000000][    T0]  dump_backtrace+0xfc/0x1dc
+[    0.000000][    T0]  dump_stack_lvl+0xa8/0x11c
+[    0.000000][    T0]  panic+0x194/0x464
+[    0.000000][    T0]  __cfi_check_fail+0x54/0x58
+[    0.000000][    T0]  __cfi_slowpath_diag+0x354/0x4b0
+[    0.000000][    T0]  blake2s_update+0x14c/0x178
+[    0.000000][    T0]  _extract_entropy+0xf4/0x29c
+[    0.000000][    T0]  crng_initialize_primary+0x24/0x94
+[    0.000000][    T0]  rand_initialize+0x2c/0x6c
+[    0.000000][    T0]  start_kernel+0x2f8/0x65c
+[    0.000000][    T0]  __primary_switched+0xc4/0x7be4
+[    0.000000][    T0] Rebooting in 5 seconds..
+
+Nonetheless, the function pointer method isn't so terrific anyway, so
+this patch replaces it with a simple boolean, which also gets inlined
+away. This successfully works around the Clang bug.
+
+In general, I'm not too keen on all of the indirection involved here; it
+clearly does more harm than good. Hopefully the whole thing can get
+cleaned up down the road when lib/crypto is overhauled more
+comprehensively. But for now, we go with a simple bandaid.
+
+Fixes: 6048fdcc5f26 ("lib/crypto: blake2s: include as built-in")
+Link: https://github.com/ClangBuiltLinux/linux/issues/1567
+Reported-by: Miles Chen <miles.chen@mediatek.com>
+Tested-by: Miles Chen <miles.chen@mediatek.com>
+Tested-by: Nathan Chancellor <nathan@kernel.org>
+Tested-by: John Stultz <john.stultz@linaro.org>
+Acked-by: Nick Desaulniers <ndesaulniers@google.com>
+Reviewed-by: Eric Biggers <ebiggers@google.com>
+Signed-off-by: Jason A. Donenfeld <Jason@zx2c4.com>
+
+
+commit: 7ce1bb83a14019f8c396d57ec704d19478747716
+tracing/cfi: Fix cmp_entries_* functions signature mismatch
+
+If CONFIG_CFI_CLANG=y, attempting to read an event histogram will cause
+the kernel to panic due to failed CFI check.
+
+    1. echo 'hist:keys=common_pid' >> events/sched/sched_switch/trigger
+    2. cat events/sched/sched_switch/hist
+    3. kernel panics on attempting to read hist
+
+This happens because the sort() function expects a generic
+int (*)(const void *, const void *) pointer for the compare function.
+To prevent this CFI failure, change tracing map cmp_entries_* function
+signatures to match this.
+
+Also, fix the build error reported by the kernel test robot [1].
+
+[1] https://lore.kernel.org/r/202110141140.zzi4dRh4-lkp@intel.com/
+
+Link: https://lkml.kernel.org/r/20211014045217.3265162-1-kaleshsingh@google.com
+
+Signed-off-by: Kalesh Singh <kaleshsingh@google.com>
+Reported-by: kernel test robot <lkp@intel.com>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+
+
+commit: fca41af18e10318e4de090db47d9fa7169e1bf2f
+qemu_fw_cfg: Make fw_cfg_rev_attr a proper kobj_attribute
+
+fw_cfg_showrev() is called by an indirect call in kobj_attr_show(),
+which violates clang's CFI checking because fw_cfg_showrev()'s second
+parameter is 'struct attribute', whereas the ->show() member of 'struct
+kobj_structure' expects the second parameter to be of type 'struct
+kobj_attribute'.
+
+$ cat /sys/firmware/qemu_fw_cfg/rev
+3
+
+$ dmesg | grep "CFI failure"
+[   26.016832] CFI failure (target: fw_cfg_showrev+0x0/0x8):
+
+Fix this by converting fw_cfg_rev_attr to 'struct kobj_attribute' where
+this would have been caught automatically by the incompatible pointer
+types compiler warning. Update fw_cfg_showrev() accordingly.
+
+Fixes: 75f3e8e47f38 ("firmware: introduce sysfs driver for QEMU's fw_cfg device")
+Link: https://github.com/ClangBuiltLinux/linux/issues/1299
+Signed-off-by: Nathan Chancellor <nathan@kernel.org>
+Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
+Tested-by: Sedat Dilek <sedat.dilek@gmail.com>
+Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Cc: stable@vger.kernel.org
+Link: https://lore.kernel.org/r/20210211194258.4137998-1-nathan@kernel.org
+
+
+commit: f37ccf8fce155d08ae2a4fb3db677911ced0c21a
+ACPI: bgrt: Fix CFI violation
+
+clang's Control Flow Integrity requires that every indirect call has a
+valid target, which is based on the type of the function pointer. The
+*_show() functions in this file are written as if they will be called
+from dev_attr_show(); however, they will be called from
+sysfs_kf_seq_show() because the files were created by
+sysfs_create_group() and the sysfs ops are based on kobj_sysfs_ops
+because of kobject_add_and_create(). Because the *_show() functions do
+not match the type of the show() member in struct kobj_attribute, there
+is a CFI violation.
+
+$ cat /sys/firmware/acpi/bgrt/{status,type,version,{x,y}offset}}
+1
+0
+1
+522
+307
+
+$ dmesg | grep "CFI failure"
+[  267.761825] CFI failure (target: type_show.d5e1ad21498a5fd14edbc5c320906598.cfi_jt+0x0/0x8):
+[  267.762246] CFI failure (target: xoffset_show.d5e1ad21498a5fd14edbc5c320906598.cfi_jt+0x0/0x8):
+[  267.762584] CFI failure (target: status_show.d5e1ad21498a5fd14edbc5c320906598.cfi_jt+0x0/0x8):
+[  267.762973] CFI failure (target: yoffset_show.d5e1ad21498a5fd14edbc5c320906598.cfi_jt+0x0/0x8):
+[  267.763330] CFI failure (target: version_show.d5e1ad21498a5fd14edbc5c320906598.cfi_jt+0x0/0x8):
+
+Convert these functions to the type of the show() member in struct
+kobj_attribute so that there is no more CFI violation. Because these
+functions are all so similar, combine them into a macro.
+
+Fixes: d1ff4b1cdbab ("ACPI: Add support for exposing BGRT data")
+Link: https://github.com/ClangBuiltLinux/linux/issues/1406
+Signed-off-by: Nathan Chancellor <nathan@kernel.org>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+
+
+commit: 5deac80d4571dffb51f452f0027979d72259a1b9
+perf/amd/uncore: Fix sysfs type mismatch
+
+dev_attr_show() calls the __uncore_*_show() functions via an indirect
+call but their type does not currently match the type of the show()
+member in 'struct device_attribute', resulting in a Control Flow
+Integrity violation.
+
+$ cat /sys/devices/amd_l3/format/umask
+config:8-15
+
+$ dmesg | grep "CFI failure"
+[ 1258.174653] CFI failure (target: __uncore_umask_show...):
+
+Update the type in the DEFINE_UNCORE_FORMAT_ATTR macro to match
+'struct device_attribute' so that there is no more CFI violation.
+
+Fixes: 06f2c24584f3 ("perf/amd/uncore: Prepare to scale for more attributes that vary per family")
+Signed-off-by: Nathan Chancellor <nathan@kernel.org>
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Link: https://lkml.kernel.org/r/20210415001112.3024673-2-nathan@kernel.org
+
+
+commit: de5bc7b425d4c27ae5faa00ea7eb6b9780b9a355
+x86/events/amd/iommu: Fix sysfs type mismatch
+
+dev_attr_show() calls _iommu_event_show() via an indirect call but
+_iommu_event_show()'s type does not currently match the type of the
+show() member in 'struct device_attribute', resulting in a Control Flow
+Integrity violation.
+
+$ cat /sys/devices/amd_iommu_1/events/mem_dte_hit
+csource=0x0a
+
+$ dmesg | grep "CFI failure"
+[ 3526.735140] CFI failure (target: _iommu_event_show...):
+
+Change _iommu_event_show() and 'struct amd_iommu_event_desc' to
+'struct device_attribute' so that there is no more CFI violation.
+
+Fixes: 7be6296fdd75 ("perf/x86/amd: AMD IOMMU Performance Counter PERF uncore PMU implementation")
+Signed-off-by: Nathan Chancellor <nathan@kernel.org>
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Link: https://lkml.kernel.org/r/20210415001112.3024673-1-nathan@kernel.org
+
+
+commit: ff301ceb5299551c3650d0e07ba879b766da4cc0
+cfi: add __cficanonical
+
+With CONFIG_CFI_CLANG, the compiler replaces a function address taken
+in C code with the address of a local jump table entry, which passes
+runtime indirect call checks. However, the compiler won't replace
+addresses taken in assembly code, which will result in a CFI failure
+if we later jump to such an address in instrumented C code. The code
+generated for the non-canonical jump table looks this:
+
+  <noncanonical.cfi_jt>: /* In C, &noncanonical points here */
+	jmp noncanonical
+  ...
+  <noncanonical>:        /* function body */
+	...
+
+This change adds the __cficanonical attribute, which tells the
+compiler to use a canonical jump table for the function instead. This
+means the compiler will rename the actual function to <function>.cfi
+and points the original symbol to the jump table entry instead:
+
+  <canonical>:           /* jump table entry */
+	jmp canonical.cfi
+  ...
+  <canonical.cfi>:       /* function body */
+	...
+
+As a result, the address taken in assembly, or other non-instrumented
+code always points to the jump table and therefore, can be used for
+indirect calls in instrumented code without tripping CFI checks.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Acked-by: Bjorn Helgaas <bhelgaas@google.com>   # pci.h
+Tested-by: Nathan Chancellor <nathan@kernel.org>
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Link: https://lore.kernel.org/r/20210408182843.1754385-3-samitolvanen@google.com
+
+
+commit: cf68fffb66d60d96209446bfc4a15291dc5a5d41
+add support for Clang CFI
+
+This change adds support for Clang’s forward-edge Control Flow
+Integrity (CFI) checking. With CONFIG_CFI_CLANG, the compiler
+injects a runtime check before each indirect function call to ensure
+the target is a valid function with the correct static type. This
+restricts possible call targets and makes it more difficult for
+an attacker to exploit bugs that allow the modification of stored
+function pointers. For more details, see:
+
+  https://clang.llvm.org/docs/ControlFlowIntegrity.html
+
+Clang requires CONFIG_LTO_CLANG to be enabled with CFI to gain
+visibility to possible call targets. Kernel modules are supported
+with Clang’s cross-DSO CFI mode, which allows checking between
+independently compiled components.
+
+With CFI enabled, the compiler injects a __cfi_check() function into
+the kernel and each module for validating local call targets. For
+cross-module calls that cannot be validated locally, the compiler
+calls the global __cfi_slowpath_diag() function, which determines
+the target module and calls the correct __cfi_check() function. This
+patch includes a slowpath implementation that uses __module_address()
+to resolve call targets, and with CONFIG_CFI_CLANG_SHADOW enabled, a
+shadow map that speeds up module look-ups by ~3x.
+
+Clang implements indirect call checking using jump tables and
+offers two methods of generating them. With canonical jump tables,
+the compiler renames each address-taken function to <function>.cfi
+and points the original symbol to a jump table entry, which passes
+__cfi_check() validation. This isn’t compatible with stand-alone
+assembly code, which the compiler doesn’t instrument, and would
+result in indirect calls to assembly code to fail. Therefore, we
+default to using non-canonical jump tables instead, where the compiler
+generates a local jump table entry <function>.cfi_jt for each
+address-taken function, and replaces all references to the function
+with the address of the jump table entry.
+
+Note that because non-canonical jump table addresses are local
+to each component, they break cross-module function address
+equality. Specifically, the address of a global function will be
+different in each module, as it's replaced with the address of a local
+jump table entry. If this address is passed to a different module,
+it won’t match the address of the same function taken there. This
+may break code that relies on comparing addresses passed from other
+components.
+
+CFI checking can be disabled in a function with the __nocfi attribute.
+Additionally, CFI can be disabled for an entire compilation unit by
+filtering out CC_FLAGS_CFI.
+
+By default, CFI failures result in a kernel panic to stop a potential
+exploit. CONFIG_CFI_PERMISSIVE enables a permissive mode, where the
+kernel prints out a rate-limited warning instead, and allows execution
+to continue. This option is helpful for locating type mismatches, but
+should only be enabled during development.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Tested-by: Nathan Chancellor <nathan@kernel.org>
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Link: https://lore.kernel.org/r/20210408182843.1754385-2-samitolvanen@google.com
+
+
+commit: 2bc6262c6117dd18106d5aa50d53e945b5d99c51
+ACPI: CPPC: Replace cppc_attr with kobj_attribute
+
+All of the CPPC sysfs show functions are called via indirect call in
+kobj_attr_show(), where they should be of type
+
+ssize_t (*show)(struct kobject *kobj, struct kobj_attribute *attr, char *buf);
+
+because that is the type of the ->show() member in
+'struct kobj_attribute' but they are actually of type
+
+ssize_t (*show)(struct kobject *kobj, struct attribute *attr, char *buf);
+
+because of the ->show() member in 'struct cppc_attr', resulting in a
+Control Flow Integrity violation [1].
+
+$ cat /sys/devices/system/cpu/cpu0/acpi_cppc/highest_perf
+3400
+
+$ dmesg | grep "CFI failure"
+[  175.970559] CFI failure (target: show_highest_perf+0x0/0x8):
+
+As far as I can tell, the only difference between 'struct cppc_attr'
+and 'struct kobj_attribute' aside from the type of the attr parameter
+is the type of the count parameter in the ->store() member (ssize_t vs.
+size_t), which does not actually matter because all of these nodes are
+read-only.
+
+Eliminate 'struct cppc_attr' in favor of 'struct kobj_attribute' to fix
+the violation.
+
+[1]: https://lore.kernel.org/r/20210401233216.2540591-1-samitolvanen@google.com/
+
+Fixes: 158c998ea44b ("ACPI / CPPC: add sysfs support to compute delivered performance")
+Link: https://github.com/ClangBuiltLinux/linux/issues/1343
+Signed-off-by: Nathan Chancellor <nathan@kernel.org>
+Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+
+
+commit: 2bf2346159bc99cf0679e25be20f4daca60f3f5c
+remoteproc: core: Remove casting to rproc_handle_resource_t
+
+There are four different callback functions that are used for the
+rproc_handle_resource_t callback that all have different second
+parameter types.
+
+rproc_handle_vdev -> struct fw_rsc_vdev
+rproc_handle_trace -> struct fw_rsc_trace
+rproc_handle_devmem -> struct fw_rsc_devmem
+rproc_handle_carveout -> struct fw_rsc_carveout
+
+These callbacks are cast to rproc_handle_resource_t so that there is no
+error about incompatible pointer types. Unfortunately, this is a Clang's
+Control-Flow Integrity checking violation, which verifies that the
+callback function's types match the prototypes exactly before jumping.
+
+[    7.275750] Kernel panic - not syncing: CFI failure (target: rproc_handle_vdev+0x0/0x4)
+[    7.283763] CPU: 2 PID: 1 Comm: init Tainted: G         C O      5.4.70-03301-g527af2c96672 #17
+[    7.292463] Hardware name: NXP i.MX8MPlus EVK board (DT)
+[    7.297779] Call trace:
+[    7.300232]  dump_backtrace.cfi_jt+0x0/0x4
+[    7.304337]  show_stack+0x18/0x24
+[    7.307660]  dump_stack+0xb8/0x114
+[    7.311069]  panic+0x164/0x3d4
+[    7.314130]  __ubsan_handle_cfi_check_fail_abort+0x0/0x14
+[    7.319533]  perf_proc_update_handler+0x0/0xcc
+[    7.323983]  __cfi_check+0x63278/0x6a290
+[    7.327913]  rproc_boot+0x3f8/0x738
+[    7.331404]  rproc_add+0x68/0x110
+[    7.334738]  imx_rproc_probe+0x5e4/0x708 [imx_rproc]
+[    7.339711]  platform_drv_probe+0xac/0xf0
+[    7.343726]  really_probe+0x260/0x65c
+[    7.347393]  driver_probe_device+0x64/0x100
+[    7.351580]  device_driver_attach+0x6c/0xac
+[    7.355766]  __driver_attach+0xdc/0x184
+[    7.359609]  bus_for_each_dev+0x98/0x104
+[    7.363537]  driver_attach+0x24/0x30
+[    7.367117]  bus_add_driver+0x100/0x1e0
+[    7.370958]  driver_register+0x78/0x114
+[    7.374800]  __platform_driver_register+0x44/0x50
+[    7.379514]  init_module+0x20/0xfe8 [imx_rproc]
+[    7.384049]  do_one_initcall+0x190/0x348
+[    7.387979]  do_init_module+0x5c/0x210
+[    7.391731]  load_module+0x2fbc/0x3590
+[    7.395485]  __arm64_sys_finit_module+0xb8/0xec
+[    7.400025]  el0_svc_common+0xb4/0x19c
+[    7.403777]  el0_svc_handler+0x74/0x98
+[    7.407531]  el0_svc+0x8/0xc
+[    7.410419] SMP: stopping secondary CPUs
+[    7.414648] Kernel Offset: disabled
+[    7.418142] CPU features: 0x00010002,2000200c
+[    7.422501] Memory Limit: none
+
+To fix this, change the second parameter of all functions to void * and
+use a local variable with the correct type so that everything works
+properly. With this, we can remove casting to rproc_handle_resource_t
+for these functions.
+
+Signed-off-by: Jindong Yue <jindong.yue@nxp.com>
+Reviewed-by: Peng Fan <peng.fan@nxp.com>
+Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Mathieu Poirier <mathieu.poirier@linaro.org>
+Link: https://lore.kernel.org/r/20210224055825.7417-1-jindong.yue@nxp.com
+Signed-off-by: Bjorn Andersson <bjorn.andersson@linaro.org>
+
+
+commit: 362b9398c962c9ec563653444e15ef9032ef3a90
+usb: dwc2: Fix parameter type in function pointer prototype
+
+When booting up on a Raspberry Pi 4 with Control Flow Integrity checking
+enabled, the following warning/panic happens:
+
+[    1.626435] CFI failure (target: dwc2_set_bcm_params+0x0/0x4):
+[    1.632408] WARNING: CPU: 0 PID: 32 at kernel/cfi.c:30 __cfi_check_fail+0x54/0x5c
+[    1.640021] Modules linked in:
+[    1.643137] CPU: 0 PID: 32 Comm: kworker/0:1 Not tainted 5.8.0-rc6-next-20200724-00051-g89ba619726de #1
+[    1.652693] Hardware name: Raspberry Pi 4 Model B Rev 1.2 (DT)
+[    1.658637] Workqueue: events deferred_probe_work_func
+[    1.663870] pstate: 60000005 (nZCv daif -PAN -UAO BTYPE=--)
+[    1.669542] pc : __cfi_check_fail+0x54/0x5c
+[    1.673798] lr : __cfi_check_fail+0x54/0x5c
+[    1.678050] sp : ffff8000102bbaa0
+[    1.681419] x29: ffff8000102bbaa0 x28: ffffab09e21c7000
+[    1.686829] x27: 0000000000000402 x26: ffff0000f6e7c228
+[    1.692238] x25: 00000000fb7cdb0d x24: 0000000000000005
+[    1.697647] x23: ffffab09e2515000 x22: ffffab09e069a000
+[    1.703055] x21: 4c550309df1cf4c1 x20: ffffab09e2433c60
+[    1.708462] x19: ffffab09e160dc50 x18: ffff0000f6e8cc78
+[    1.713870] x17: 0000000000000041 x16: ffffab09e0bce6f8
+[    1.719278] x15: ffffab09e1c819b7 x14: 0000000000000003
+[    1.724686] x13: 00000000ffffefff x12: 0000000000000000
+[    1.730094] x11: 0000000000000000 x10: 00000000ffffffff
+[    1.735501] x9 : c932f7abfc4bc600 x8 : c932f7abfc4bc600
+[    1.740910] x7 : 077207610770075f x6 : ffff0000f6c38f00
+[    1.746317] x5 : 0000000000000000 x4 : 0000000000000000
+[    1.751723] x3 : 0000000000000000 x2 : 0000000000000000
+[    1.757129] x1 : ffff8000102bb7d8 x0 : 0000000000000032
+[    1.762539] Call trace:
+[    1.765030]  __cfi_check_fail+0x54/0x5c
+[    1.768938]  __cfi_check+0x5fa6c/0x66afc
+[    1.772932]  dwc2_init_params+0xd74/0xd78
+[    1.777012]  dwc2_driver_probe+0x484/0x6ec
+[    1.781180]  platform_drv_probe+0xb4/0x100
+[    1.785350]  really_probe+0x228/0x63c
+[    1.789076]  driver_probe_device+0x80/0xc0
+[    1.793247]  __device_attach_driver+0x114/0x160
+[    1.797857]  bus_for_each_drv+0xa8/0x128
+[    1.801851]  __device_attach.llvm.14901095709067289134+0xc0/0x170
+[    1.808050]  bus_probe_device+0x44/0x100
+[    1.812044]  deferred_probe_work_func+0x78/0xb8
+[    1.816656]  process_one_work+0x204/0x3c4
+[    1.820736]  worker_thread+0x2f0/0x4c4
+[    1.824552]  kthread+0x174/0x184
+[    1.827837]  ret_from_fork+0x10/0x18
+
+CFI validates that all indirect calls go to a function with the same
+exact function pointer prototype. In this case, dwc2_set_bcm_params
+is the target, which has a parameter of type 'struct dwc2_hsotg *',
+but it is being implicitly cast to have a parameter of type 'void *'
+because that is the set_params function pointer prototype. Make the
+function pointer protoype match the definitions so that there is no
+more violation.
+
+Fixes: 7de1debcd2de ("usb: dwc2: Remove platform static params")
+Link: https://github.com/ClangBuiltLinux/linux/issues/1107
+Signed-off-by: Nathan Chancellor <natechancellor@gmail.com>
+Signed-off-by: Felipe Balbi <balbi@kernel.org>
+
+
+commit: e6d701dca9893990d999fd145e3e07223c002b06
+ACPI: sysfs: Fix pm_profile_attr type
+
+When running a kernel with Clang's Control Flow Integrity implemented,
+there is a violation that happens when accessing
+/sys/firmware/acpi/pm_profile:
+
+$ cat /sys/firmware/acpi/pm_profile
+0
+
+$ dmesg
+...
+[   17.352564] ------------[ cut here ]------------
+[   17.352568] CFI failure (target: acpi_show_profile+0x0/0x8):
+[   17.352572] WARNING: CPU: 3 PID: 497 at kernel/cfi.c:29 __cfi_check_fail+0x33/0x40
+[   17.352573] Modules linked in:
+[   17.352575] CPU: 3 PID: 497 Comm: cat Tainted: G        W         5.7.0-microsoft-standard+ #1
+[   17.352576] RIP: 0010:__cfi_check_fail+0x33/0x40
+[   17.352577] Code: 48 c7 c7 50 b3 85 84 48 c7 c6 50 0a 4e 84 e8 a4 d8 60 00 85 c0 75 02 5b c3 48 c7 c7 dc 5e 49 84 48 89 de 31 c0 e8 7d 06 eb ff <0f> 0b 5b c3 00 00 cc cc 00 00 cc cc 00 85 f6 74 25 41 b9 ea ff ff
+[   17.352577] RSP: 0018:ffffaa6dc3c53d30 EFLAGS: 00010246
+[   17.352578] RAX: 331267e0c06cee00 RBX: ffffffff83d85890 RCX: ffffffff8483a6f8
+[   17.352579] RDX: ffff9cceabbb37c0 RSI: 0000000000000082 RDI: ffffffff84bb9e1c
+[   17.352579] RBP: ffffffff845b2bc8 R08: 0000000000000001 R09: ffff9cceabbba200
+[   17.352579] R10: 000000000000019d R11: 0000000000000000 R12: ffff9cc947766f00
+[   17.352580] R13: ffffffff83d6bd50 R14: ffff9ccc6fa80000 R15: ffffffff845bd328
+[   17.352582] FS:  00007fdbc8d13580(0000) GS:ffff9cce91ac0000(0000) knlGS:0000000000000000
+[   17.352582] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[   17.352583] CR2: 00007fdbc858e000 CR3: 00000005174d0000 CR4: 0000000000340ea0
+[   17.352584] Call Trace:
+[   17.352586]  ? rev_id_show+0x8/0x8
+[   17.352587]  ? __cfi_check+0x45bac/0x4b640
+[   17.352589]  ? kobj_attr_show+0x73/0x80
+[   17.352590]  ? sysfs_kf_seq_show+0xc1/0x140
+[   17.352592]  ? ext4_seq_options_show.cfi_jt+0x8/0x8
+[   17.352593]  ? seq_read+0x180/0x600
+[   17.352595]  ? sysfs_create_file_ns.cfi_jt+0x10/0x10
+[   17.352596]  ? tlbflush_read_file+0x8/0x8
+[   17.352597]  ? __vfs_read+0x6b/0x220
+[   17.352598]  ? handle_mm_fault+0xa23/0x11b0
+[   17.352599]  ? vfs_read+0xa2/0x130
+[   17.352599]  ? ksys_read+0x6a/0xd0
+[   17.352601]  ? __do_sys_getpgrp+0x8/0x8
+[   17.352602]  ? do_syscall_64+0x72/0x120
+[   17.352603]  ? entry_SYSCALL_64_after_hwframe+0x44/0xa9
+[   17.352604] ---[ end trace 7b1fa81dc897e419 ]---
+
+When /sys/firmware/acpi/pm_profile is read, sysfs_kf_seq_show is called,
+which in turn calls kobj_attr_show, which gets the ->show callback
+member by calling container_of on attr (casting it to struct
+kobj_attribute) then calls it.
+
+There is a CFI violation because pm_profile_attr is of type
+struct device_attribute but kobj_attr_show calls ->show expecting it
+to be from struct kobj_attribute. CFI checking ensures that function
+pointer types match when doing indirect calls. Fix pm_profile_attr to
+be defined in terms of kobj_attribute so there is no violation or
+mismatch.
+
+Fixes: 362b646062b2 ("ACPI: Export FADT pm_profile integer value to userspace")
+Link: https://github.com/ClangBuiltLinux/linux/issues/1051
+Reported-by: yuu ichii <byahu140@heisei.be>
+Signed-off-by: Nathan Chancellor <natechancellor@gmail.com>
+Cc: 3.10+ <stable@vger.kernel.org> # 3.10+
+Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+
+
+commit: 99a1ae29360980e79fa2d616819a6fe7411e4eda
+clk: bcm2835: Remove casting to bcm2835_clk_register
+
+There are four different callback functions that are used for the
+clk_register callback that all have different second parameter types.
+
+bcm2835_register_pll -> struct bcm2835_pll_data
+bcm2835_register_pll_divider -> struct bcm2835_pll_divider_data
+bcm2835_register_clock -> struct bcm2835_clock_data
+bcm2835_register_date -> struct bcm2835_gate_data
+
+These callbacks are cast to bcm2835_clk_register so that there is no
+error about incompatible pointer types. Unfortunately, this is a control
+flow integrity violation, which verifies that the callback function's
+types match the prototypes exactly before jumping.
+
+[    0.857913] CFI failure (target: 0xffffff9334a81820):
+[    0.857977] WARNING: CPU: 3 PID: 35 at kernel/cfi.c:29 __cfi_check_fail+0x50/0x58
+[    0.857985] Modules linked in:
+[    0.858007] CPU: 3 PID: 35 Comm: kworker/3:1 Not tainted 4.19.123-v8-01301-gdbb48f16956e4-dirty #1
+[    0.858015] Hardware name: Raspberry Pi 3 Model B Rev 1.2 (DT)
+[    0.858031] Workqueue: events 0xffffff9334a925c8
+[    0.858046] pstate: 60000005 (nZCv daif -PAN -UAO)
+[    0.858058] pc : __cfi_check_fail+0x50/0x58
+[    0.858070] lr : __cfi_check_fail+0x50/0x58
+[    0.858078] sp : ffffff800814ba90
+[    0.858086] x29: ffffff800814ba90 x28: 000fffffffdfff3d
+[    0.858101] x27: 00000000002000c2 x26: ffffff93355fdb18
+[    0.858116] x25: 0000000000000000 x24: ffffff9334a81820
+[    0.858131] x23: ffffff93357f3580 x22: ffffff9334af1000
+[    0.858146] x21: a79b57e88f8ebc81 x20: ffffff93357f3580
+[    0.858161] x19: ffffff9334a81820 x18: fffffff679769070
+[    0.858175] x17: 0000000000000000 x16: 0000000000000000
+[    0.858190] x15: 0000000000000004 x14: 000000000000003c
+[    0.858205] x13: 0000000000003044 x12: 0000000000000000
+[    0.858220] x11: b57e91cd641bae00 x10: b57e91cd641bae00
+[    0.858235] x9 : b57e91cd641bae00 x8 : b57e91cd641bae00
+[    0.858250] x7 : 0000000000000000 x6 : ffffff933591d4e5
+[    0.858264] x5 : 0000000000000000 x4 : 0000000000000000
+[    0.858279] x3 : ffffff800814b718 x2 : ffffff9334a84818
+[    0.858293] x1 : ffffff9334bba66c x0 : 0000000000000029
+[    0.858308] Call trace:
+[    0.858321]  __cfi_check_fail+0x50/0x58
+[    0.858337]  __cfi_check+0x3ab3c/0x4467c
+[    0.858351]  bcm2835_clk_probe+0x210/0x2dc
+[    0.858369]  platform_drv_probe+0xb0/0xfc
+[    0.858380]  really_probe+0x4a0/0x5a8
+[    0.858391]  driver_probe_device+0x68/0x104
+[    0.858403]  __device_attach_driver+0x100/0x148
+[    0.858418]  bus_for_each_drv+0xb0/0x12c
+[    0.858431]  __device_attach.llvm.17225159516306086099+0xc0/0x168
+[    0.858443]  bus_probe_device+0x44/0xfc
+[    0.858455]  deferred_probe_work_func+0xa0/0xe0
+[    0.858472]  process_one_work+0x210/0x538
+[    0.858485]  worker_thread+0x2e8/0x478
+[    0.858500]  kthread+0x154/0x164
+[    0.858515]  ret_from_fork+0x10/0x18
+
+To fix this, change the second parameter of all functions void * and use
+a local variable with the correct type so that everything works
+properly. With this, the only use of bcm2835_clk_register is in struct
+bcm2835_clk_desc so we can just remove it and use the type directly.
+
+Fixes: 56eb3a2ed972 ("clk: bcm2835: remove use of BCM2835_CLOCK_COUNT in driver")
+Link: https://github.com/ClangBuiltLinux/linux/issues/1028
+Signed-off-by: Nathan Chancellor <natechancellor@gmail.com>
+Link: https://lkml.kernel.org/r/20200516080806.1459784-2-natechancellor@gmail.com
+Signed-off-by: Stephen Boyd <sboyd@kernel.org>
+
+
+commit: 7fdc66debebc6a7170a37c8c9b0d9585a9788fb4
+hv_netvsc: Fix netvsc_start_xmit's return type
+
+netvsc_start_xmit is used as a callback function for the ndo_start_xmit
+function pointer. ndo_start_xmit's return type is netdev_tx_t but
+netvsc_start_xmit's return type is int.
+
+This causes a failure with Control Flow Integrity (CFI), which requires
+function pointer prototypes and callback function definitions to match
+exactly. When CFI is in enforcing, the kernel panics. When booting a
+CFI kernel with WSL 2, the VM is immediately terminated because of this.
+
+The splat when CONFIG_CFI_PERMISSIVE is used:
+
+[    5.916765] CFI failure (target: netvsc_start_xmit+0x0/0x10):
+[    5.916771] WARNING: CPU: 8 PID: 0 at kernel/cfi.c:29 __cfi_check_fail+0x2e/0x40
+[    5.916772] Modules linked in:
+[    5.916774] CPU: 8 PID: 0 Comm: swapper/8 Not tainted 5.7.0-rc3-next-20200424-microsoft-cbl-00001-ged4eb37d2c69-dirty #1
+[    5.916776] RIP: 0010:__cfi_check_fail+0x2e/0x40
+[    5.916777] Code: 48 c7 c7 70 98 63 a9 48 c7 c6 11 db 47 a9 e8 69 55 59 00 85 c0 75 02 5b c3 48 c7 c7 73 c6 43 a9 48 89 de 31 c0 e8 12 2d f0 ff <0f> 0b 5b c3 00 00 cc cc 00 00 cc cc 00 00 cc cc 00 00 85 f6 74 25
+[    5.916778] RSP: 0018:ffffa803c0260b78 EFLAGS: 00010246
+[    5.916779] RAX: 712a1af25779e900 RBX: ffffffffa8cf7950 RCX: ffffffffa962cf08
+[    5.916779] RDX: ffffffffa9c36b60 RSI: 0000000000000082 RDI: ffffffffa9c36b5c
+[    5.916780] RBP: ffff8ffc4779c2c0 R08: 0000000000000001 R09: ffffffffa9c3c300
+[    5.916781] R10: 0000000000000151 R11: ffffffffa9c36b60 R12: ffff8ffe39084000
+[    5.916782] R13: ffffffffa8cf7950 R14: ffffffffa8d12cb0 R15: ffff8ffe39320140
+[    5.916784] FS:  0000000000000000(0000) GS:ffff8ffe3bc00000(0000) knlGS:0000000000000000
+[    5.916785] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[    5.916786] CR2: 00007ffef5749408 CR3: 00000002f4f5e000 CR4: 0000000000340ea0
+[    5.916787] Call Trace:
+[    5.916788]  <IRQ>
+[    5.916790]  __cfi_check+0x3ab58/0x450e0
+[    5.916793]  ? dev_hard_start_xmit+0x11f/0x160
+[    5.916795]  ? sch_direct_xmit+0xf2/0x230
+[    5.916796]  ? __dev_queue_xmit.llvm.11471227737707190958+0x69d/0x8e0
+[    5.916797]  ? neigh_resolve_output+0xdf/0x220
+[    5.916799]  ? neigh_connected_output.cfi_jt+0x8/0x8
+[    5.916801]  ? ip6_finish_output2+0x398/0x4c0
+[    5.916803]  ? nf_nat_ipv6_out+0x10/0xa0
+[    5.916804]  ? nf_hook_slow+0x84/0x100
+[    5.916807]  ? ip6_input_finish+0x8/0x8
+[    5.916807]  ? ip6_output+0x6f/0x110
+[    5.916808]  ? __ip6_local_out.cfi_jt+0x8/0x8
+[    5.916810]  ? mld_sendpack+0x28e/0x330
+[    5.916811]  ? ip_rt_bug+0x8/0x8
+[    5.916813]  ? mld_ifc_timer_expire+0x2db/0x400
+[    5.916814]  ? neigh_proxy_process+0x8/0x8
+[    5.916816]  ? call_timer_fn+0x3d/0xd0
+[    5.916817]  ? __run_timers+0x2a9/0x300
+[    5.916819]  ? rcu_core_si+0x8/0x8
+[    5.916820]  ? run_timer_softirq+0x14/0x30
+[    5.916821]  ? __do_softirq+0x154/0x262
+[    5.916822]  ? native_x2apic_icr_write+0x8/0x8
+[    5.916824]  ? irq_exit+0xba/0xc0
+[    5.916825]  ? hv_stimer0_vector_handler+0x99/0xe0
+[    5.916826]  ? hv_stimer0_callback_vector+0xf/0x20
+[    5.916826]  </IRQ>
+[    5.916828]  ? hv_stimer_global_cleanup.cfi_jt+0x8/0x8
+[    5.916829]  ? raw_setsockopt+0x8/0x8
+[    5.916830]  ? default_idle+0xe/0x10
+[    5.916832]  ? do_idle.llvm.10446269078108580492+0xb7/0x130
+[    5.916833]  ? raw_setsockopt+0x8/0x8
+[    5.916833]  ? cpu_startup_entry+0x15/0x20
+[    5.916835]  ? cpu_hotplug_enable.cfi_jt+0x8/0x8
+[    5.916836]  ? start_secondary+0x188/0x190
+[    5.916837]  ? secondary_startup_64+0xa5/0xb0
+[    5.916838] ---[ end trace f2683fa869597ba5 ]---
+
+Avoid this by using the right return type for netvsc_start_xmit.
+
+Fixes: fceaf24a943d8 ("Staging: hv: add the Hyper-V virtual network driver")
+Link: https://github.com/ClangBuiltLinux/linux/issues/1009
+Signed-off-by: Nathan Chancellor <natechancellor@gmail.com>
+Reviewed-by: Haiyang Zhang <haiyangz@microsoft.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+
+
+commit: 5b0a6acc73fcac5f7d17badd09275bf7b9b46603
+io_uring: simplify task_work func
+
+Since we don't really use req->task_work anymore, get rid of it together
+with the nasty ->func aliasing between ->io_task_work and ->task_work,
+and hide ->fallback_node inside of io_task_work.
+
+Also, as task_work is gone now, replace the callback type from
+task_work_func_t to a function taking io_kiocb to avoid casting and
+simplify code.
+
+Signed-off-by: Pavel Begunkov <asml.silence@gmail.com>
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+
+
+commit: 7072a355ba191c08b0579f0f66e3eba0e28bf818
+netfilter: nfnetlink: add a missing rcu_read_unlock()
+
+Reported by syzbot :
+BUG: sleeping function called from invalid context at include/linux/sched/mm.h:201
+in_atomic(): 0, irqs_disabled(): 0, non_block: 0, pid: 26899, name: syz-executor.5
+1 lock held by syz-executor.5/26899:
+ #0: ffffffff8bf797a0 (rcu_read_lock){....}-{1:2}, at: nfnetlink_get_subsys net/netfilter/nfnetlink.c:148 [inline]
+ #0: ffffffff8bf797a0 (rcu_read_lock){....}-{1:2}, at: nfnetlink_rcv_msg+0x1da/0x1300 net/netfilter/nfnetlink.c:226
+Preemption disabled at:
+[<ffffffff8917799e>] preempt_schedule_irq+0x3e/0x90 kernel/sched/core.c:5533
+CPU: 1 PID: 26899 Comm: syz-executor.5 Not tainted 5.12.0-next-20210504-syzkaller #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 01/01/2011
+Call Trace:
+ __dump_stack lib/dump_stack.c:79 [inline]
+ dump_stack+0x141/0x1d7 lib/dump_stack.c:120
+ ___might_sleep.cold+0x1f1/0x237 kernel/sched/core.c:8338
+ might_alloc include/linux/sched/mm.h:201 [inline]
+ slab_pre_alloc_hook mm/slab.h:500 [inline]
+ slab_alloc_node mm/slub.c:2845 [inline]
+ kmem_cache_alloc_node+0x33d/0x3e0 mm/slub.c:2960
+ __alloc_skb+0x20b/0x340 net/core/skbuff.c:413
+ alloc_skb include/linux/skbuff.h:1107 [inline]
+ nlmsg_new include/net/netlink.h:953 [inline]
+ netlink_ack+0x1ed/0xaa0 net/netlink/af_netlink.c:2437
+ netlink_rcv_skb+0x33d/0x420 net/netlink/af_netlink.c:2508
+ nfnetlink_rcv+0x1ac/0x420 net/netfilter/nfnetlink.c:650
+ netlink_unicast_kernel net/netlink/af_netlink.c:1312 [inline]
+ netlink_unicast+0x533/0x7d0 net/netlink/af_netlink.c:1338
+ netlink_sendmsg+0x856/0xd90 net/netlink/af_netlink.c:1927
+ sock_sendmsg_nosec net/socket.c:654 [inline]
+ sock_sendmsg+0xcf/0x120 net/socket.c:674
+ ____sys_sendmsg+0x6e8/0x810 net/socket.c:2350
+ ___sys_sendmsg+0xf3/0x170 net/socket.c:2404
+ __sys_sendmsg+0xe5/0x1b0 net/socket.c:2433
+ do_syscall_64+0x3a/0xb0 arch/x86/entry/common.c:47
+ entry_SYSCALL_64_after_hwframe+0x44/0xae
+RIP: 0033:0x4665f9
+Code: ff ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 40 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 bc ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007fa8a03ee188 EFLAGS: 00000246 ORIG_RAX: 000000000000002e
+RAX: ffffffffffffffda RBX: 000000000056bf60 RCX: 00000000004665f9
+RDX: 0000000000000000 RSI: 0000000020000480 RDI: 0000000000000004
+RBP: 00000000004bfce1 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000246 R12: 000000000056bf60
+R13: 00007fffe864480f R14: 00007fa8a03ee300 R15: 0000000000022000
+
+================================================
+WARNING: lock held when returning to user space!
+5.12.0-next-20210504-syzkaller #0 Tainted: G        W
+------------------------------------------------
+syz-executor.5/26899 is leaving the kernel with locks still held!
+1 lock held by syz-executor.5/26899:
+ #0: ffffffff8bf797a0 (rcu_read_lock){....}-{1:2}, at: nfnetlink_get_subsys net/netfilter/nfnetlink.c:148 [inline]
+ #0: ffffffff8bf797a0 (rcu_read_lock){....}-{1:2}, at: nfnetlink_rcv_msg+0x1da/0x1300 net/netfilter/nfnetlink.c:226
+------------[ cut here ]------------
+WARNING: CPU: 0 PID: 26899 at kernel/rcu/tree_plugin.h:359 rcu_note_context_switch+0xfd/0x16e0 kernel/rcu/tree_plugin.h:359
+Modules linked in:
+CPU: 0 PID: 26899 Comm: syz-executor.5 Tainted: G        W         5.12.0-next-20210504-syzkaller #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 01/01/2011
+RIP: 0010:rcu_note_context_switch+0xfd/0x16e0 kernel/rcu/tree_plugin.h:359
+Code: 48 89 fa 48 c1 ea 03 0f b6 14 02 48 89 f8 83 e0 07 83 c0 03 38 d0 7c 08 84 d2 0f 85 2e 0d 00 00 8b bd cc 03 00 00 85 ff 7e 02 <0f> 0b 65 48 8b 2c 25 00 f0 01 00 48 8d bd cc 03 00 00 48 b8 00 00
+RSP: 0000:ffffc90002fffdb0 EFLAGS: 00010002
+RAX: 0000000000000007 RBX: ffff8880b9c36080 RCX: ffffffff8dc99bac
+RDX: 0000000000000000 RSI: 0000000000000008 RDI: 0000000000000001
+RBP: ffff88808b9d1c80 R08: 0000000000000000 R09: ffffffff8dc96917
+R10: fffffbfff1b92d22 R11: 0000000000000000 R12: 0000000000000000
+R13: ffff88808b9d1c80 R14: ffff88808b9d1c80 R15: ffffc90002ff8000
+FS:  00007fa8a03ee700(0000) GS:ffff8880b9c00000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007f09896ed000 CR3: 0000000032070000 CR4: 00000000001526f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Call Trace:
+ __schedule+0x214/0x23e0 kernel/sched/core.c:5044
+ schedule+0xcf/0x270 kernel/sched/core.c:5226
+ exit_to_user_mode_loop kernel/entry/common.c:162 [inline]
+ exit_to_user_mode_prepare+0x13e/0x280 kernel/entry/common.c:208
+ irqentry_exit_to_user_mode+0x5/0x40 kernel/entry/common.c:314
+ asm_sysvec_reschedule_ipi+0x12/0x20 arch/x86/include/asm/idtentry.h:637
+RIP: 0033:0x4665f9
+
+Fixes: 50f2db9e368f ("netfilter: nfnetlink: consolidate callback types")
+Signed-off-by: Eric Dumazet <edumazet@google.com>
+Reported-by: syzbot <syzkaller@googlegroups.com>
+Signed-off-by: Pablo Neira Ayuso <pablo@netfilter.org>
+
+
+commit: 50f2db9e368f73ecbbaa92da365183fa953aaba7
+netfilter: nfnetlink: consolidate callback types
+
+Add enum nfnl_callback_type to identify the callback type to provide one
+single callback.
+
+Signed-off-by: Pablo Neira Ayuso <pablo@netfilter.org>
+
+
+commit: 35b7c87c18082c01e0179ba2fde10b6494f0acb5
+Merge branch 'pci/hotplug'
+
+- Remove unused acpiphp_callback typedef (Chen Lin)
+
+* pci/hotplug:
+  PCI: acpiphp: Remove unused acpiphp_callback typedef
+
+
+commit: fc235fcb0f7c1865ccb2d1f50267eef299a4f3fb
+PCI: acpiphp: Remove unused acpiphp_callback typedef
+
+Remove the 'acpiphp_callback' typedef as it is not used.
+
+Link: https://lore.kernel.org/r/1613443120-4279-1-git-send-email-chen45464546@163.com
+Signed-off-by: Chen Lin <chen.lin5@zte.com.cn>
+Signed-off-by: Bjorn Helgaas <bhelgaas@google.com>
+Reviewed-by: Krzysztof Wilczyński <kw@linux.com>
+Reviewed-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+
+
+commit: f575f2bdb6c3c7a8debffd8df1f355656f59a9c0
+drm/nouveau/kms/nv50-: Remove (nv_encoder->crtc) checks in ->disable callbacks
+
+Noticed these in both the disable (which we'll be getting rid of in a
+moment) and the atomic disable callbacks: both callback types check whether
+or not there's actually a CRTC assigned to the given encoder. However, as
+->atomic_disable and ->disable will never be called without a CRTC assigned
+to the given encoder there's no point in this check. So just remove it.
+
+Signed-off-by: Lyude Paul <lyude@redhat.com>
+Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+
+commit: 32fc4a9ad56f8260025ac766548d625509cc879f
+cfg80211: fix callback type mismatches in wext-compat
+
+Instead of casting callback functions to type iw_handler, which trips
+indirect call checking with Clang's Control-Flow Integrity (CFI), add
+stub functions with the correct function type for the callbacks.
+
+Reported-by: Sedat Dilek <sedat.dilek@gmail.com>
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Link: https://lore.kernel.org/r/20201117205902.405316-1-samitolvanen@google.com
+Signed-off-by: Johannes Berg <johannes.berg@intel.com>
+
+
+commit: ebd19fc372e3e78bf165f230e7c084e304441c08
+perf/x86: fix sysfs type mismatches
+
+This change switches rapl to use PMU_FORMAT_ATTR, and fixes two other
+macros to use device_attribute instead of kobj_attribute to avoid
+callback type mismatches that trip indirect call checking with Clang's
+Control-Flow Integrity (CFI).
+
+Reported-by: Sedat Dilek <sedat.dilek@gmail.com>
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Link: https://lkml.kernel.org/r/20201113183126.1239404-1-samitolvanen@google.com
+
+
+commit: 382625d0d4325fb14a29444eb8dce8dcc2eb9b51
+Merge tag 'for-5.9/block-20200802' of git://git.kernel.dk/linux-block
+
+Pull core block updates from Jens Axboe:
+ "Good amount of cleanups and tech debt removals in here, and as a
+  result, the diffstat shows a nice net reduction in code.
+
+   - Softirq completion cleanups (Christoph)
+
+   - Stop using ->queuedata (Christoph)
+
+   - Cleanup bd claiming (Christoph)
+
+   - Use check_events, moving away from the legacy media change
+     (Christoph)
+
+   - Use inode i_blkbits consistently (Christoph)
+
+   - Remove old unused writeback congestion bits (Christoph)
+
+   - Cleanup/unify submission path (Christoph)
+
+   - Use bio_uninit consistently, instead of bio_disassociate_blkg
+     (Christoph)
+
+   - sbitmap cleared bits handling (John)
+
+   - Request merging blktrace event addition (Jan)
+
+   - sysfs add/remove race fixes (Luis)
+
+   - blk-mq tag fixes/optimizations (Ming)
+
+   - Duplicate words in comments (Randy)
+
+   - Flush deferral cleanup (Yufen)
+
+   - IO context locking/retry fixes (John)
+
+   - struct_size() usage (Gustavo)
+
+   - blk-iocost fixes (Chengming)
+
+   - blk-cgroup IO stats fixes (Boris)
+
+   - Various little fixes"
+
+* tag 'for-5.9/block-20200802' of git://git.kernel.dk/linux-block: (135 commits)
+  block: blk-timeout: delete duplicated word
+  block: blk-mq-sched: delete duplicated word
+  block: blk-mq: delete duplicated word
+  block: genhd: delete duplicated words
+  block: elevator: delete duplicated word and fix typos
+  block: bio: delete duplicated words
+  block: bfq-iosched: fix duplicated word
+  iocost_monitor: start from the oldest usage index
+  iocost: Fix check condition of iocg abs_vdebt
+  block: Remove callback typedefs for blk_mq_ops
+  block: Use non _rcu version of list functions for tag_set_list
+  blk-cgroup: show global disk stats in root cgroup io.stat
+  blk-cgroup: make iostat functions visible to stat printing
+  block: improve discard bio alignment in __blkdev_issue_discard()
+  block: change REQ_OP_ZONE_RESET and REQ_OP_ZONE_RESET_ALL to be odd numbers
+  block: defer flush request no matter whether we have elevator
+  block: make blk_timeout_init() static
+  block: remove retry loop in ioc_release_fn()
+  block: remove unnecessary ioc nested locking
+  block: integrate bd_start_claiming into __blkdev_get
+  ...
+
+
+commit: b13fecb1c3a603c4b8e99b306fecf4f668c11b32
+treewide: Replace DECLARE_TASKLET() with DECLARE_TASKLET_OLD()
+
+This converts all the existing DECLARE_TASKLET() (and ...DISABLED)
+macros with DECLARE_TASKLET_OLD() in preparation for refactoring the
+tasklet callback type. All existing DECLARE_TASKLET() users had a "0"
+data argument, it has been removed here as well.
+
+Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Acked-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Kees Cook <keescook@chromium.org>
+
+
+commit: 0516c2f6ae6570a0c4a081189d71a48cfadc34a7
+block: Remove callback typedefs for blk_mq_ops
+
+No need to define typedefs for the callbacks, because there is not a
+single user except blk_mq_ops.
+
+Signed-off-by: Daniel Wagner <dwagner@suse.de>
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+
+
+commit: d61fe22c2ae42d9fd76c34ef4224064cca4b04b0
+ALSA: ctl: allow TLV read operation for callback type of element in locked case
+
+A design of ALSA control core allows applications to execute three
+operations for TLV feature; read, write and command. Furthermore, it
+allows driver developers to process the operations by two ways; allocated
+array or callback function. In the former, read operation is just allowed,
+thus developers uses the latter when device driver supports variety of
+models or the target model is expected to dynamically change information
+stored in TLV container.
+
+The core also allows applications to lock any element so that the other
+applications can't perform write operation to the element for element
+value and TLV information. When the element is locked, write and command
+operation for TLV information are prohibited as well as element value.
+Any read operation should be allowed in the case.
+
+At present, when an element has callback function for TLV information,
+TLV read operation returns EPERM if the element is locked. On the
+other hand, the read operation is success when an element has allocated
+array for TLV information. In both cases, read operation is success for
+element value expectedly.
+
+This commit fixes the bug. This change can be backported to v4.14
+kernel or later.
+
+Signed-off-by: Takashi Sakamoto <o-takashi@sakamocchi.jp>
+Reviewed-by: Jaroslav Kysela <perex@perex.cz>
+Link: https://lore.kernel.org/r/20191223093347.15279-1-o-takashi@sakamocchi.jp
+Signed-off-by: Takashi Iwai <tiwai@suse.de>
+
+
+commit: 7da538c1e154635e1f84b2fc41e482680e770844
+Merge git://git.kernel.org/pub/scm/linux/kernel/git/pablo/nf
+
+Pablo Neira Ayuso says:
+
+====================
+Netfilter fixes for net
+
+The following patchset contains Netfilter fixes for net:
+
+1) Wait for rcu grace period after releasing netns in ctnetlink,
+   from Florian Westphal.
+
+2) Incorrect command type in flowtable offload ndo invocation,
+   from wenxu.
+
+3) Incorrect callback type in flowtable offload flow tuple
+   updates, also from wenxu.
+
+4) Fix compile warning on flowtable offload infrastructure due to
+   possible reference to uninitialized variable, from Nathan Chancellor.
+
+5) Do not inline nf_ct_resolve_clash(), this is called from slow
+   path / stress situations. From Florian Westphal.
+
+6) Missing IPv6 flow selector description in flowtable offload.
+
+7) Missing check for NETDEV_UNREGISTER in nf_tables offload
+   infrastructure, from wenxu.
+
+8) Update NAT selftest to use randomized netns names, from
+   Florian Westphal.
+
+9) Restore nfqueue bridge support, from Marco Oliverio.
+
+10) Compilation warning in SCTP_CHUNKMAP_*() on xt_sctp header.
+    From Phil Sutter.
+
+11) Fix bogus lookup/get match for non-anonymous rbtree sets.
+
+12) Missing netlink validation for NFT_SET_ELEM_INTERVAL_END
+    elements.
+
+13) Missing netlink validation for NFT_DATA_VALUE after
+    nft_data_init().
+
+14) If rule specifies no actions, offload infrastructure returns
+    EOPNOTSUPP.
+
+15) Module refcount leak in object updates.
+
+16) Missing sanitization for ARP traffic from br_netfilter, from
+    Eric Dumazet.
+
+17) Compilation breakage on big-endian due to incorrect memcpy()
+    size in the flowtable offload infrastructure.
+====================
+
+Signed-off-by: David S. Miller <davem@davemloft.net>
+
+
+commit: 9a3d7fd275be4559277667228902824165153c80
+Merge tag 'driver-core-5.5-rc1' of git://git.kernel.org/pub/scm/linux/kernel/git/gregkh/driver-core
+
+Pull driver core updates from Greg KH:
+ "Here is the "big" set of driver core patches for 5.5-rc1
+
+  There's a few minor cleanups and fixes in here, but the majority of
+  the patches in here fall into two buckets:
+
+   - debugfs api cleanups and fixes
+
+   - driver core device link support for boot dependancy issues
+
+  The debugfs api cleanups are working to slowly refactor the debugfs
+  apis so that it is even harder to use incorrectly. That work has been
+  happening for the past few kernel releases and will continue over
+  time, it's a long-term project/goal
+
+  The driver core device link support missed 5.4 by just a bit, so it's
+  been sitting and baking for many months now. It's from Saravana Kannan
+  to help resolve the problems that DT-based systems have at boot time
+  with dependancy graphs and kernel modules. Turns out that no one has
+  actually tried to build a generic arm64 kernel with loads of modules
+  and have it "just work" for a variety of platforms (like a distro
+  kernel). The big problem turned out to be a lack of dependency
+  information between different areas of DT entries, and the work here
+  resolves that problem and now allows devices to boot properly, and
+  quicker than a monolith kernel.
+
+  All of these patches have been in linux-next for a long time with no
+  reported issues"
+
+* tag 'driver-core-5.5-rc1' of git://git.kernel.org/pub/scm/linux/kernel/git/gregkh/driver-core: (68 commits)
+  tracing: Remove unnecessary DEBUG_FS dependency
+  of: property: Add device link support for interrupt-parent, dmas and -gpio(s)
+  debugfs: Fix !DEBUG_FS debugfs_create_automount
+  of: property: Add device link support for "iommu-map"
+  of: property: Fix the semantics of of_is_ancestor_of()
+  i2c: of: Populate fwnode in of_i2c_get_board_info()
+  drivers: base: Fix Kconfig indentation
+  firmware_loader: Fix labels with comma for builtin firmware
+  driver core: Allow device link operations inside sync_state()
+  driver core: platform: Declare ret variable only once
+  cpu-topology: declare parse_acpi_topology in <linux/arch_topology.h>
+  crypto: hisilicon: no need to check return value of debugfs_create functions
+  driver core: platform: use the correct callback type for bus_find_device
+  firmware_class: make firmware caching configurable
+  driver core: Clarify documentation for fwnode_operations.add_links()
+  mailbox: tegra: Fix superfluous IRQ error message
+  net: caif: Fix debugfs on 64-bit platforms
+  mac80211: Use debugfs_create_xul() helper
+  media: c8sectpfe: no need to check return value of debugfs_create functions
+  of: property: Add device link support for iommus, mboxes and io-channels
+  ...
+
+
+commit: 492c88720d36eb662f9f10c1633f7726fbb07fc4
+driver core: platform: use the correct callback type for bus_find_device
+
+platform_find_device_by_driver calls bus_find_device and passes
+platform_match as the callback function. Casting the function to a
+mismatching type trips indirect call Control-Flow Integrity (CFI) checking.
+
+This change adds a callback function with the correct type and instead
+of casting the function, explicitly casts the second parameter to struct
+device_driver* as expected by platform_match.
+
+Fixes: 36f3313d6bff9 ("platform: Add platform_find_device_by_driver() helper")
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Cc: stable <stable@vger.kernel.org>
+Link: https://lore.kernel.org/r/20191112214156.3430-1-samitolvanen@google.com
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+
+commit: 0320d1e7a3819dd81c9b2892f0ce6fd82b453bdf
+Merge branch 'netfilter-flowtable-hardware-offload'
+
+Pablo Neira Ayuso says:
+
+====================
+netfilter flowtable hardware offload
+
+The following patchset adds hardware offload support for the flowtable
+infrastructure [1]. This infrastructure provides a fast datapath for
+the classic Linux forwarding path that users can enable through policy,
+eg.
+
+ table inet x {
+      flowtable f {
+               hook ingress priority 10 devices = { eth0, eth1 }
+	       flags offload
+      }
+      chain y {
+               type filter hook forward priority 0; policy accept;
+               ip protocol tcp flow offload @f
+      }
+ }
+
+This example above enables the fastpath for TCP traffic between devices
+eth0 and eth1. Users can turn on the hardware offload through the
+'offload' flag from the flowtable definition. If this new flag is not
+specified, the software flowtable datapath is used.
+
+This patchset is composed of 4 preparation patches:
+
+   room to extend this infrastructure, eg. accelerate bridge forwarding.
+
+And 2 patches to add the hardware offload control and data planes:
+
+   hardware offload. This includes a new NFTA_FLOWTABLE_FLAGS netlink
+   attribute to convey the optional NF_FLOWTABLE_HW_OFFLOAD flag.
+   API available at net/core/flow_offload.h to represent the flow
+   through two flow_rule objects to configure an exact 5-tuple matching
+   on each direction plus the corresponding forwarding actions, that is,
+   the MAC address, NAT and checksum updates; and port redirection in
+   order to configure the hardware datapath. This patch only supports
+   for IPv4 support and statistics collection for flow aging as an initial
+   step.
+
+This patchset introduces a new flow_block callback type that needs to be
+set up to configure the flowtable hardware offload.
+
+The first client of this infrastructure follows up after this batch.
+I would like to thank Mellanox for developing the first upstream driver
+to use this infrastructure.
+
+[1] Documentation/networking/nf_flowtable.txt
+====================
+
+Signed-off-by: David S. Miller <davem@davemloft.net>
+
+
+commit: ef8f3d48afd6a17a0dae8c277c2f539c2f19fd16
+Merge branch 'akpm' (patches from Andrew)
+
+Merge updates from Andrew Morton:
+ "Am experimenting with splitting MM up into identifiable subsystems
+  perhaps with a view to gitifying it in complex ways. Also with more
+  verbose "incoming" emails.
+
+  Most of MM is here and a few other trees.
+
+  Subsystems affected by this patch series:
+   - hotfixes
+   - iommu
+   - scripts
+   - arch/sh
+   - ocfs2
+   - mm:slab-generic
+   - mm:slub
+   - mm:kmemleak
+   - mm:kasan
+   - mm:cleanups
+   - mm:debug
+   - mm:pagecache
+   - mm:swap
+   - mm:memcg
+   - mm:gup
+   - mm:pagemap
+   - mm:infrastructure
+   - mm:vmalloc
+   - mm:initialization
+   - mm:pagealloc
+   - mm:vmscan
+   - mm:tools
+   - mm:proc
+   - mm:ras
+   - mm:oom-kill
+
+  hotfixes:
+      mm: vmscan: scan anonymous pages on file refaults
+      mm/nvdimm: add is_ioremap_addr and use that to check ioremap address
+      mm/memcontrol: fix wrong statistics in memory.stat
+      mm/z3fold.c: lock z3fold page before  __SetPageMovable()
+      nilfs2: do not use unexported cpu_to_le32()/le32_to_cpu() in uapi header
+      MAINTAINERS: nilfs2: update email address
+
+  iommu:
+      include/linux/dmar.h: replace single-char identifiers in macros
+
+  scripts:
+      scripts/decode_stacktrace: match basepath using shell prefix operator, not regex
+      scripts/decode_stacktrace: look for modules with .ko.debug extension
+      scripts/spelling.txt: drop "sepc" from the misspelling list
+      scripts/spelling.txt: add spelling fix for prohibited
+      scripts/decode_stacktrace: Accept dash/underscore in modules
+      scripts/spelling.txt: add more spellings to spelling.txt
+
+  arch/sh:
+      arch/sh/configs/sdk7786_defconfig: remove CONFIG_LOGFS
+      sh: config: remove left-over BACKLIGHT_LCD_SUPPORT
+      sh: prevent warnings when using iounmap
+
+  ocfs2:
+      fs: ocfs: fix spelling mistake "hearbeating" -> "heartbeat"
+      ocfs2/dlm: use struct_size() helper
+      ocfs2: add last unlock times in locking_state
+      ocfs2: add locking filter debugfs file
+      ocfs2: add first lock wait time in locking_state
+      ocfs: no need to check return value of debugfs_create functions
+      fs/ocfs2/dlmglue.c: unneeded variable: "status"
+      ocfs2: use kmemdup rather than duplicating its implementation
+
+  mm:slab-generic:
+    Patch series "mm/slab: Improved sanity checking":
+      mm/slab: validate cache membership under freelist hardening
+      mm/slab: sanity-check page type when looking up cache
+      lkdtm/heap: add tests for freelist hardening
+
+  mm:slub:
+      mm/slub.c: avoid double string traverse in kmem_cache_flags()
+      slub: don't panic for memcg kmem cache creation failure
+
+  mm:kmemleak:
+      mm/kmemleak.c: fix check for softirq context
+      mm/kmemleak.c: change error at _write when kmemleak is disabled
+      docs: kmemleak: add more documentation details
+
+  mm:kasan:
+      mm/kasan: print frame description for stack bugs
+      Patch series "Bitops instrumentation for KASAN", v5:
+        lib/test_kasan: add bitops tests
+        x86: use static_cpu_has in uaccess region to avoid instrumentation
+        asm-generic, x86: add bitops instrumentation for KASAN
+      Patch series "mm/kasan: Add object validation in ksize()", v3:
+        mm/kasan: introduce __kasan_check_{read,write}
+        mm/kasan: change kasan_check_{read,write} to return boolean
+        lib/test_kasan: Add test for double-kzfree detection
+        mm/slab: refactor common ksize KASAN logic into slab_common.c
+        mm/kasan: add object validation in ksize()
+
+  mm:cleanups:
+      include/linux/pfn_t.h: remove pfn_t_to_virt()
+      Patch series "remove ARCH_SELECT_MEMORY_MODEL where it has no effect":
+        arm: remove ARCH_SELECT_MEMORY_MODEL
+        s390: remove ARCH_SELECT_MEMORY_MODEL
+        sparc: remove ARCH_SELECT_MEMORY_MODEL
+      mm/gup.c: make follow_page_mask() static
+      mm/memory.c: trivial clean up in insert_page()
+      mm: make !CONFIG_HUGE_PAGE wrappers into static inlines
+      include/linux/mm_types.h: ifdef struct vm_area_struct::swap_readahead_info
+      mm: remove the account_page_dirtied export
+      mm/page_isolation.c: change the prototype of undo_isolate_page_range()
+      include/linux/vmpressure.h: use spinlock_t instead of struct spinlock
+      mm: remove the exporting of totalram_pages
+      include/linux/pagemap.h: document trylock_page() return value
+
+  mm:debug:
+      mm/failslab.c: by default, do not fail allocations with direct reclaim only
+      Patch series "debug_pagealloc improvements":
+        mm, debug_pagelloc: use static keys to enable debugging
+        mm, page_alloc: more extensive free page checking with debug_pagealloc
+        mm, debug_pagealloc: use a page type instead of page_ext flag
+
+  mm:pagecache:
+      Patch series "fix filler_t callback type mismatches", v2:
+        mm/filemap.c: fix an overly long line in read_cache_page
+        mm/filemap: don't cast ->readpage to filler_t for do_read_cache_page
+        jffs2: pass the correct prototype to read_cache_page
+        9p: pass the correct prototype to read_cache_page
+      mm/filemap.c: correct the comment about VM_FAULT_RETRY
+
+  mm:swap:
+      mm, swap: fix race between swapoff and some swap operations
+      mm/swap_state.c: simplify total_swapcache_pages() with get_swap_device()
+      mm, swap: use rbtree for swap_extent
+      mm/mincore.c: fix race between swapoff and mincore
+
+  mm:memcg:
+      memcg, oom: no oom-kill for __GFP_RETRY_MAYFAIL
+      memcg, fsnotify: no oom-kill for remote memcg charging
+      mm, memcg: introduce memory.events.local
+      mm: memcontrol: dump memory.stat during cgroup OOM
+      Patch series "mm: reparent slab memory on cgroup removal", v7:
+        mm: memcg/slab: postpone kmem_cache memcg pointer initialization to memcg_link_cache()
+        mm: memcg/slab: rename slab delayed deactivation functions and fields
+        mm: memcg/slab: generalize postponed non-root kmem_cache deactivation
+        mm: memcg/slab: introduce __memcg_kmem_uncharge_memcg()
+        mm: memcg/slab: unify SLAB and SLUB page accounting
+        mm: memcg/slab: don't check the dying flag on kmem_cache creation
+        mm: memcg/slab: synchronize access to kmem_cache dying flag using a spinlock
+        mm: memcg/slab: rework non-root kmem_cache lifecycle management
+        mm: memcg/slab: stop setting page->mem_cgroup pointer for slab pages
+        mm: memcg/slab: reparent memcg kmem_caches on cgroup removal
+      mm, memcg: add a memcg_slabinfo debugfs file
+
+  mm:gup:
+      Patch series "switch the remaining architectures to use generic GUP", v4:
+        mm: use untagged_addr() for get_user_pages_fast addresses
+        mm: simplify gup_fast_permitted
+        mm: lift the x86_32 PAE version of gup_get_pte to common code
+        MIPS: use the generic get_user_pages_fast code
+        sh: add the missing pud_page definition
+        sh: use the generic get_user_pages_fast code
+        sparc64: add the missing pgd_page definition
+        sparc64: define untagged_addr()
+        sparc64: use the generic get_user_pages_fast code
+        mm: rename CONFIG_HAVE_GENERIC_GUP to CONFIG_HAVE_FAST_GUP
+        mm: reorder code blocks in gup.c
+        mm: consolidate the get_user_pages* implementations
+        mm: validate get_user_pages_fast flags
+        mm: move the powerpc hugepd code to mm/gup.c
+        mm: switch gup_hugepte to use try_get_compound_head
+        mm: mark the page referenced in gup_hugepte
+      mm/gup: speed up check_and_migrate_cma_pages() on huge page
+      mm/gup.c: remove some BUG_ONs from get_gate_page()
+      mm/gup.c: mark undo_dev_pagemap as __maybe_unused
+
+  mm:pagemap:
+      asm-generic, x86: introduce generic pte_{alloc,free}_one[_kernel]
+      alpha: switch to generic version of pte allocation
+      arm: switch to generic version of pte allocation
+      arm64: switch to generic version of pte allocation
+      csky: switch to generic version of pte allocation
+      m68k: sun3: switch to generic version of pte allocation
+      mips: switch to generic version of pte allocation
+      nds32: switch to generic version of pte allocation
+      nios2: switch to generic version of pte allocation
+      parisc: switch to generic version of pte allocation
+      riscv: switch to generic version of pte allocation
+      um: switch to generic version of pte allocation
+      unicore32: switch to generic version of pte allocation
+      mm/pgtable: drop pgtable_t variable from pte_fn_t functions
+      mm/memory.c: fail when offset == num in first check of __vm_map_pages()
+
+  mm:infrastructure:
+      mm/mmu_notifier: use hlist_add_head_rcu()
+
+  mm:vmalloc:
+      Patch series "Some cleanups for the KVA/vmalloc", v5:
+        mm/vmalloc.c: remove "node" argument
+        mm/vmalloc.c: preload a CPU with one object for split purpose
+        mm/vmalloc.c: get rid of one single unlink_va() when merge
+        mm/vmalloc.c: switch to WARN_ON() and move it under unlink_va()
+      mm/vmalloc.c: spelling> s/informaion/information/
+
+  mm:initialization:
+      mm/large system hash: use vmalloc for size > MAX_ORDER when !hashdist
+      mm/large system hash: clear hashdist when only one node with memory is booted
+
+  mm:pagealloc:
+      arm64: move jump_label_init() before parse_early_param()
+      Patch series "add init_on_alloc/init_on_free boot options", v10:
+        mm: security: introduce init_on_alloc=1 and init_on_free=1 boot options
+        mm: init: report memory auto-initialization features at boot time
+
+  mm:vmscan:
+      mm: vmscan: remove double slab pressure by inc'ing sc->nr_scanned
+      mm: vmscan: correct some vmscan counters for THP swapout
+
+  mm:tools:
+      tools/vm/slabinfo: order command line options
+      tools/vm/slabinfo: add partial slab listing to -X
+      tools/vm/slabinfo: add option to sort by partial slabs
+      tools/vm/slabinfo: add sorting info to help menu
+
+  mm:proc:
+      proc: use down_read_killable mmap_sem for /proc/pid/maps
+      proc: use down_read_killable mmap_sem for /proc/pid/smaps_rollup
+      proc: use down_read_killable mmap_sem for /proc/pid/pagemap
+      proc: use down_read_killable mmap_sem for /proc/pid/clear_refs
+      proc: use down_read_killable mmap_sem for /proc/pid/map_files
+      mm: use down_read_killable for locking mmap_sem in access_remote_vm
+      mm: smaps: split PSS into components
+      mm: vmalloc: show number of vmalloc pages in /proc/meminfo
+
+  mm:ras:
+      mm/memory-failure.c: clarify error message
+
+  mm:oom-kill:
+      mm: memcontrol: use CSS_TASK_ITER_PROCS at mem_cgroup_scan_tasks()
+      mm, oom: refactor dump_tasks for memcg OOMs
+      mm, oom: remove redundant task_in_mem_cgroup() check
+      oom: decouple mems_allowed from oom_unkillable_task
+      mm/oom_kill.c: remove redundant OOM score normalization in select_bad_process()"
+
+* akpm: (147 commits)
+  mm/oom_kill.c: remove redundant OOM score normalization in select_bad_process()
+  oom: decouple mems_allowed from oom_unkillable_task
+  mm, oom: remove redundant task_in_mem_cgroup() check
+  mm, oom: refactor dump_tasks for memcg OOMs
+  mm: memcontrol: use CSS_TASK_ITER_PROCS at mem_cgroup_scan_tasks()
+  mm/memory-failure.c: clarify error message
+  mm: vmalloc: show number of vmalloc pages in /proc/meminfo
+  mm: smaps: split PSS into components
+  mm: use down_read_killable for locking mmap_sem in access_remote_vm
+  proc: use down_read_killable mmap_sem for /proc/pid/map_files
+  proc: use down_read_killable mmap_sem for /proc/pid/clear_refs
+  proc: use down_read_killable mmap_sem for /proc/pid/pagemap
+  proc: use down_read_killable mmap_sem for /proc/pid/smaps_rollup
+  proc: use down_read_killable mmap_sem for /proc/pid/maps
+  tools/vm/slabinfo: add sorting info to help menu
+  tools/vm/slabinfo: add option to sort by partial slabs
+  tools/vm/slabinfo: add partial slab listing to -X
+  tools/vm/slabinfo: order command line options
+  mm: vmscan: correct some vmscan counters for THP swapout
+  mm: vmscan: remove double slab pressure by inc'ing sc->nr_scanned
+  ...
+
+
+commit: d322a8e5e3e9742fa6b76a207e5df57e03f318f9
+mm/filemap.c: fix an overly long line in read_cache_page
+
+Patch series "fix filler_t callback type mismatches", v2.
+
+Casting mapping->a_ops->readpage to filler_t causes an indirect call
+type mismatch with Control-Flow Integrity checking.  This change fixes
+the mismatch in read_cache_page_gfp and read_mapping_page by adding
+using a NULL filler argument as an indication to call ->readpage
+directly, and by passing the right parameter callbacks in nfs and jffs2.
+
+This patch (of 4):
+
+Code cleanup.
+
+Link: http://lkml.kernel.org/r/20190520055731.24538-2-hch@lst.de
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Cc: Nick Desaulniers <ndesaulniers@google.com>
+Cc: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+
+
+commit: 5ac94332248ee017964ba368cdda4ce647e3aba7
+Merge tag 'for-linus' of git://git.kernel.org/pub/scm/linux/kernel/git/rdma/rdma
+
+Pull more rdma updates from Jason Gunthorpe:
+ "This is being sent to get a fix for the gcc 9.1 build warnings, and
+  I've also pulled in some bug fix patches that were posted in the last
+  two weeks.
+
+   - Avoid the gcc 9.1 warning about overflowing a union member
+
+   - Fix the wrong callback type for a single response netlink to doit
+
+   - Bug fixes from more usage of the mlx5 devx interface"
+
+* tag 'for-linus' of git://git.kernel.org/pub/scm/linux/kernel/git/rdma/rdma:
+  net/mlx5: Set completion EQs as shared resources
+  IB/mlx5: Verify DEVX general object type correctly
+  RDMA/core: Change system parameters callback from dumpit to doit
+  RDMA: Directly cast the sockaddr union to sockaddr
+
+
+commit: 59f20f5a0c9767a8b66688b84e72a345b4dc1bc1
+drm/amdgpu/pp: switch smu callback type for get_argument()
+
+return a uint32_t rather than an int to properly reflect
+what the function does.
+
+Reviewed-by: Rex Zhu <rezhu@amd.com>
+Signed-off-by: Alex Deucher <alexander.deucher@amd.com>
+
+
+commit: 7abccdba25be45630eede85053496f1f48d36ec8
+Merge branch 'for-upstream' of git://git.kernel.org/pub/scm/linux/kernel/git/bluetooth/bluetooth-next
+
+Johan Hedberg says:
+
+====================
+pull request: bluetooth-next 2015-04-04
+
+Here's what's probably the last bluetooth-next pull request for 4.1:
+
+ - Fixes for LE advertising data & advertising parameters
+ - Fix for race condition with HCI_RESET flag
+ - New BNEPGETSUPPFEAT ioctl, needed for certification
+ - New HCI request callback type to get the resulting skb
+ - Cleanups to use BIT() macro wherever possible
+ - Consolidate Broadcom device entries in the btusb HCI driver
+ - Check for valid flags in CMTP, HIDP & BNEP
+ - Disallow local privacy & OOB data combo to prevent a potential race
+ - Expose SMP & ECDH selftest results through debugfs
+ - Expose current Device ID info through debugfs
+
+Please let me know if there are any issues pulling. Thanks.
+====================
+
+Signed-off-by: David S. Miller <davem@davemloft.net>
+
+
+commit: ca8f4fb21d08747013cce9cf1840aa5bfc31f2d8
+skbuff: struct ubuf_info callback type safety
+
+The skb struct ubuf_info callback gets passed struct ubuf_info
+itself, not the arg value as the field name and the function signature
+seem to imply. Rename the arg field to ctx to match usage,
+add documentation and change the callback argument type
+to make usage clear and to have compiler check correctness.
+
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+
+
+commit: 53da59aa6dd881fd0bbdd058a8a299d90ce9dd1d
+tracepoints: Add check trace callback type
+
+This check is meant to be used by tracepoint users which do a direct cast of
+callbacks to (void *) for direct registration, thus bypassing the
+register_trace_##name and unregister_trace_##name checks.
+
+This permits to ensure that the callback type matches the function type at the
+call site, but without generating any code.
+
+Acked-by: Masami Hiramatsu <mhiramat@redhat.com>
+Acked-by: Frederic Weisbecker <fweisbec@gmail.com>
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+LKML-Reference: <20100430165959.GA25605@Krystal>
+CC: Ingo Molnar <mingo@elte.hu>
+CC: Andrew Morton <akpm@linux-foundation.org>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: Arnaldo Carvalho de Melo <acme@redhat.com>
+CC: Lai Jiangshan <laijs@cn.fujitsu.com>
+CC: Li Zefan <lizf@cn.fujitsu.com>
+CC: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+
+
+commit: fa0fcde66ac3360678360104b24492015e7b852b
+spi/s3c64xx: Add new parameter to cs callback
+
+Since most of the chip-selects are simply going to be like
+gpio_set_value, it would do good to have the same callback type
+so that it could simply be made to point at gpio_set_value.
+
+Signed-off-by: Jassi Brar <jassi.brar@samsung.com>
+Signed-off-by: Grant Likely <grant.likely@secretlab.ca>
+
+
+commit: 5220ed6b321639d68a66bad2082456c1b273f3ea
+ALSA: ASoC: Fix compile warnings on corgi.c
+
+Fix the wrong shutdown callback type.  Also removed the unused variables
+there:
+
+  sound/soc/pxa/corgi.c: In function 'corgi_shutdown':
+  sound/soc/pxa/corgi.c:114: warning: unused variable 'codec'
+  sound/soc/pxa/corgi.c: At top level:
+  sound/soc/pxa/corgi.c:175: warning: initialization from incompatible pointer type
+
+Acked-by: Mark Brown <broonie@opensource.wolfsonmicro.com>
+Signed-off-by: Takashi Iwai <tiwai@suse.de>
+
+
+commit: d0f6cfb2bd165b0aa307750e07e03420859bd554
+thermal: int340x: Fix attr.show callback prototype
+
+Control Flow Integrity (CFI) instrumentation of the kernel noticed that
+the caller, dev_attr_show(), and the callback, odvp_show(), did not have
+matching function prototypes, which would cause a CFI exception to be
+raised. Correct the prototype by using struct device_attribute instead
+of struct kobj_attribute.
+
+Reported-and-tested-by: Joao Moreira <joao@overdrivepizza.com>
+Link: https://lore.kernel.org/lkml/067ce8bd4c3968054509831fa2347f4f@overdrivepizza.com/
+Fixes: 006f006f1e5c ("thermal/int340x_thermal: Export OEM vendor variables")
+Cc: 5.8+ <stable@vger.kernel.org> # 5.8+
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+
+
+commit: 72e1781a5de9e3ee804e24f7ce9a7dd85596fc51
+Merge branch 'bpf: Build with -Wcast-function-type'
+
+Kees Cook says:
+
+====================
+
+Hi,
+
+In order to keep ahead of cases in the kernel where Control Flow Integrity
+(CFI) may trip over function call casts, enabling -Wcast-function-type
+is helpful. To that end, replace BPF_CAST_CALL() as it triggers warnings
+with this option and is now one of the last places in the kernel in need
+of fixing.
+
+Thanks,
+
+-Kees
+
+v2:
+- rebase to bpf-next
+- add acks
+v1: https://lore.kernel.org/lkml/20210927182700.2980499-1-keescook@chromium.org
+====================
+
+Signed-off-by: Alexei Starovoitov <ast@kernel.org>
+
+
+commit: 102acbacfd9a96d101abd96d1a7a5bf92b7c3e8e
+bpf: Replace callers of BPF_CAST_CALL with proper function typedef
+
+In order to keep ahead of cases in the kernel where Control Flow
+Integrity (CFI) may trip over function call casts, enabling
+-Wcast-function-type is helpful. To that end, BPF_CAST_CALL causes
+various warnings and is one of the last places in the kernel
+triggering this warning.
+
+For actual function calls, replace BPF_CAST_CALL() with a typedef, which
+captures the same details about the given function pointers.
+
+This change results in no object code difference.
+
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: Alexei Starovoitov <ast@kernel.org>
+Acked-by: Andrii Nakryiko <andrii@kernel.org>
+Acked-by: Gustavo A. R. Silva <gustavoars@kernel.org>
+Link: https://github.com/KSPP/linux/issues/20
+Link: https://lore.kernel.org/lkml/CAEf4Bzb46=-J5Fxc3mMZ8JQPtK1uoE0q6+g6WPz53Cvx=CBEhw@mail.gmail.com
+Link: https://lore.kernel.org/bpf/20210928230946.4062144-3-keescook@chromium.org
+
+
+commit: 3d717fad5081b8e3bda76d86907fad95398cbde8
+bpf: Replace "want address" users of BPF_CAST_CALL with BPF_CALL_IMM
+
+In order to keep ahead of cases in the kernel where Control Flow
+Integrity (CFI) may trip over function call casts, enabling
+-Wcast-function-type is helpful. To that end, BPF_CAST_CALL causes
+various warnings and is one of the last places in the kernel triggering
+this warning.
+
+Most places using BPF_CAST_CALL actually just want a void * to perform
+math on. It's not actually performing a call, so just use a different
+helper to get the void *, by way of the new BPF_CALL_IMM() helper, which
+can clean up a common copy/paste idiom as well.
+
+This change results in no object code difference.
+
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: Alexei Starovoitov <ast@kernel.org>
+Reviewed-by: Gustavo A. R. Silva <gustavoars@kernel.org>
+Acked-by: Andrii Nakryiko <andrii@kernel.org>
+Link: https://github.com/KSPP/linux/issues/20
+Link: https://lore.kernel.org/lkml/CAEf4Bzb46=-J5Fxc3mMZ8JQPtK1uoE0q6+g6WPz53Cvx=CBEhw@mail.gmail.com
+Link: https://lore.kernel.org/bpf/20210928230946.4062144-2-keescook@chromium.org
+
+
+commit: 4f0f586bf0c898233d8f316f471a21db2abd522d
+treewide: Change list_sort to use const pointers
+
+list_sort() internally casts the comparison function passed to it
+to a different type with constant struct list_head pointers, and
+uses this pointer to call the functions, which trips indirect call
+Control-Flow Integrity (CFI) checking.
+
+Instead of removing the consts, this change defines the
+list_cmp_func_t type and changes the comparison function types of
+all list_sort() callers to use const pointers, thus avoiding type
+mismatches.
+
+Suggested-by: Nick Desaulniers <ndesaulniers@google.com>
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Nick Desaulniers <ndesaulniers@google.com>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Tested-by: Nick Desaulniers <ndesaulniers@google.com>
+Tested-by: Nathan Chancellor <nathan@kernel.org>
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Link: https://lore.kernel.org/r/20210408182843.1754385-10-samitolvanen@google.com
+
+
+commit: cf68fffb66d60d96209446bfc4a15291dc5a5d41
+add support for Clang CFI
+
+This change adds support for Clang’s forward-edge Control Flow
+Integrity (CFI) checking. With CONFIG_CFI_CLANG, the compiler
+injects a runtime check before each indirect function call to ensure
+the target is a valid function with the correct static type. This
+restricts possible call targets and makes it more difficult for
+an attacker to exploit bugs that allow the modification of stored
+function pointers. For more details, see:
+
+  https://clang.llvm.org/docs/ControlFlowIntegrity.html
+
+Clang requires CONFIG_LTO_CLANG to be enabled with CFI to gain
+visibility to possible call targets. Kernel modules are supported
+with Clang’s cross-DSO CFI mode, which allows checking between
+independently compiled components.
+
+With CFI enabled, the compiler injects a __cfi_check() function into
+the kernel and each module for validating local call targets. For
+cross-module calls that cannot be validated locally, the compiler
+calls the global __cfi_slowpath_diag() function, which determines
+the target module and calls the correct __cfi_check() function. This
+patch includes a slowpath implementation that uses __module_address()
+to resolve call targets, and with CONFIG_CFI_CLANG_SHADOW enabled, a
+shadow map that speeds up module look-ups by ~3x.
+
+Clang implements indirect call checking using jump tables and
+offers two methods of generating them. With canonical jump tables,
+the compiler renames each address-taken function to <function>.cfi
+and points the original symbol to a jump table entry, which passes
+__cfi_check() validation. This isn’t compatible with stand-alone
+assembly code, which the compiler doesn’t instrument, and would
+result in indirect calls to assembly code to fail. Therefore, we
+default to using non-canonical jump tables instead, where the compiler
+generates a local jump table entry <function>.cfi_jt for each
+address-taken function, and replaces all references to the function
+with the address of the jump table entry.
+
+Note that because non-canonical jump table addresses are local
+to each component, they break cross-module function address
+equality. Specifically, the address of a global function will be
+different in each module, as it's replaced with the address of a local
+jump table entry. If this address is passed to a different module,
+it won’t match the address of the same function taken there. This
+may break code that relies on comparing addresses passed from other
+components.
+
+CFI checking can be disabled in a function with the __nocfi attribute.
+Additionally, CFI can be disabled for an entire compilation unit by
+filtering out CC_FLAGS_CFI.
+
+By default, CFI failures result in a kernel panic to stop a potential
+exploit. CONFIG_CFI_PERMISSIVE enables a permissive mode, where the
+kernel prints out a rate-limited warning instead, and allows execution
+to continue. This option is helpful for locating type mismatches, but
+should only be enabled during development.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Tested-by: Nathan Chancellor <nathan@kernel.org>
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Link: https://lore.kernel.org/r/20210408182843.1754385-2-samitolvanen@google.com
+
+
+commit: c9c324dc22aab1687da37001b321b6dfa93a0699
+objtool: Support stack layout changes in alternatives
+
+The ORC unwinder showed a warning [1] which revealed the stack layout
+didn't match what was expected.  The problem was that paravirt patching
+had replaced "CALL *pv_ops.irq.save_fl" with "PUSHF;POP".  That changed
+the stack layout between the PUSHF and the POP, so unwinding from an
+interrupt which occurred between those two instructions would fail.
+
+Part of the agreed upon solution was to rework the custom paravirt
+patching code to use alternatives instead, since objtool already knows
+how to read alternatives (and converging runtime patching infrastructure
+is always a good thing anyway).  But the main problem still remains,
+which is that runtime patching can change the stack layout.
+
+Making stack layout changes in alternatives was disallowed with commit
+7117f16bf460 ("objtool: Fix ORC vs alternatives"), but now that paravirt
+is going to be doing it, it needs to be supported.
+
+One way to do so would be to modify the ORC table when the code gets
+patched.  But ORC is simple -- a good thing! -- and it's best to leave
+it alone.
+
+Instead, support stack layout changes by "flattening" all possible stack
+states (CFI) from parallel alternative code streams into a single set of
+linear states.  The only necessary limitation is that CFI conflicts are
+disallowed at all possible instruction boundaries.
+
+For example, this scenario is allowed:
+
+          Alt1                    Alt2                    Alt3
+
+   0x00   CALL *pv_ops.save_fl    CALL xen_save_fl        PUSHF
+   0x01                                                   POP %RAX
+   0x02                                                   NOP
+   ...
+   0x05                           NOP
+   ...
+   0x07   <insn>
+
+The unwind information for offset-0x00 is identical for all 3
+alternatives.  Similarly offset-0x05 and higher also are identical (and
+the same as 0x00).  However offset-0x01 has deviating CFI, but that is
+only relevant for Alt3, neither of the other alternative instruction
+streams will ever hit that offset.
+
+This scenario is NOT allowed:
+
+          Alt1                    Alt2
+
+   0x00   CALL *pv_ops.save_fl    PUSHF
+   0x01                           NOP6
+   ...
+   0x07   NOP                     POP %RAX
+
+The problem here is that offset-0x7, which is an instruction boundary in
+both possible instruction patch streams, has two conflicting stack
+layouts.
+
+[ The above examples were stolen from Peter Zijlstra. ]
+
+The new flattened CFI array is used both for the detection of conflicts
+(like the second example above) and the generation of linear ORC
+entries.
+
+BTW, another benefit of these changes is that, thanks to some related
+cleanups (new fake nops and alt_group struct) objtool can finally be rid
+of fake jumps, which were a constant source of headaches.
+
+[1] https://lkml.kernel.org/r/20201111170536.arx2zbn4ngvjoov7@treble
+
+Cc: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+Signed-off-by: Josh Poimboeuf <jpoimboe@redhat.com>
+
+
+commit: 32fc4a9ad56f8260025ac766548d625509cc879f
+cfg80211: fix callback type mismatches in wext-compat
+
+Instead of casting callback functions to type iw_handler, which trips
+indirect call checking with Clang's Control-Flow Integrity (CFI), add
+stub functions with the correct function type for the callbacks.
+
+Reported-by: Sedat Dilek <sedat.dilek@gmail.com>
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Link: https://lore.kernel.org/r/20201117205902.405316-1-samitolvanen@google.com
+Signed-off-by: Johannes Berg <johannes.berg@intel.com>
+
+
+commit: 83321c335dccba262a57378361d63da96b8166d6
+x86/pci: Fix the function type for check_reserved_t
+
+e820__mapped_all() is passed as a callback to is_mmconf_reserved(),
+which expects a function of type:
+
+  typedef bool (*check_reserved_t)(u64 start, u64 end, unsigned type);
+
+However, e820__mapped_all() accepts enum e820_type as the last argument
+and this type mismatch trips indirect call checking with Clang's
+Control-Flow Integrity (CFI).
+
+As is_mmconf_reserved() only passes enum e820_type values for the
+type argument, change the typedef and the unused type argument in
+is_acpi_reserved() to enum e820_type to fix the type mismatch.
+
+Reported-by: Sedat Dilek <sedat.dilek@gmail.com>
+Suggested-by: Borislav Petkov <bp@alien8.de>
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Borislav Petkov <bp@suse.de>
+Link: https://lkml.kernel.org/r/20201130193900.456726-1-samitolvanen@google.com
+
+
+commit: ebd19fc372e3e78bf165f230e7c084e304441c08
+perf/x86: fix sysfs type mismatches
+
+This change switches rapl to use PMU_FORMAT_ATTR, and fixes two other
+macros to use device_attribute instead of kobj_attribute to avoid
+callback type mismatches that trip indirect call checking with Clang's
+Control-Flow Integrity (CFI).
+
+Reported-by: Sedat Dilek <sedat.dilek@gmail.com>
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Link: https://lkml.kernel.org/r/20201113183126.1239404-1-samitolvanen@google.com
+
+
+commit: a7b3474cbb2864d5500d5e4f48dd57c903975cab
+x86/irq: Make run_on_irqstack_cond() typesafe
+
+Sami reported that run_on_irqstack_cond() requires the caller to cast
+functions to mismatching types, which trips indirect call Control-Flow
+Integrity (CFI) in Clang.
+
+Instead of disabling CFI on that function, provide proper helpers for
+the three call variants. The actual ASM code stays the same as that is
+out of reach.
+
+ [ bp: Fix __run_on_irqstack() prototype to match. ]
+
+Fixes: 931b94145981 ("x86/entry: Provide helpers for executing on the irqstack")
+Reported-by: Nathan Chancellor <natechancellor@gmail.com>
+Reported-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Borislav Petkov <bp@suse.de>
+Tested-by: Sami Tolvanen <samitolvanen@google.com>
+Cc: <stable@vger.kernel.org>
+Link: https://github.com/ClangBuiltLinux/linux/issues/1052
+Link: https://lkml.kernel.org/r/87pn6eb5tv.fsf@nanos.tec.linutronix.de
+
+
+commit: 1146f7e2dc15a227a7e1ef9a1fb67182b25e687f
+ntfs: fix ntfs_test_inode and ntfs_init_locked_inode function type
+
+Clang's Control Flow Integrity (CFI) is a security mechanism that can help
+prevent JOP chains, deployed extensively in downstream kernels used in
+Android.
+
+Its deployment is hindered by mismatches in function signatures.  For this
+case, we make callbacks match their intended function signature, and cast
+parameters within them rather than casting the callback when passed as a
+parameter.
+
+When running `mount -t ntfs ...` we observe the following trace:
+
+Call trace:
+__cfi_check_fail+0x1c/0x24
+name_to_dev_t+0x0/0x404
+iget5_locked+0x594/0x5e8
+ntfs_fill_super+0xbfc/0x43ec
+mount_bdev+0x30c/0x3cc
+ntfs_mount+0x18/0x24
+mount_fs+0x1b0/0x380
+vfs_kern_mount+0x90/0x398
+do_mount+0x5d8/0x1a10
+SyS_mount+0x108/0x144
+el0_svc_naked+0x34/0x38
+
+Signed-off-by: Luca Stefani <luca.stefani.ge1@gmail.com>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Tested-by: freak07 <michalechner92@googlemail.com>
+Reviewed-by: Nick Desaulniers <ndesaulniers@google.com>
+Reviewed-by: Nathan Chancellor <natechancellor@gmail.com>
+Acked-by: Anton Altaparmakov <anton@tuxera.com>
+Link: http://lkml.kernel.org/r/20200718112513.533800-1-luca.stefani.ge1@gmail.com
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+
+
+commit: efe9711214e6138a5a2a46ca4068bfce50c03444
+cpuidle: change enter_s2idle() prototype
+
+Control Flow Integrity(CFI) is a security mechanism that disallows
+changes to the original control flow graph of a compiled binary,
+making it significantly harder to perform such attacks.
+
+init_state_node() assign same function callback to different
+function pointer declarations.
+
+static int init_state_node(struct cpuidle_state *idle_state,
+                           const struct of_device_id *matches,
+                           struct device_node *state_node) { ...
+        idle_state->enter = match_id->data; ...
+        idle_state->enter_s2idle = match_id->data; }
+
+Function declarations:
+
+struct cpuidle_state { ...
+        int (*enter) (struct cpuidle_device *dev,
+                      struct cpuidle_driver *drv,
+                      int index);
+
+        void (*enter_s2idle) (struct cpuidle_device *dev,
+                              struct cpuidle_driver *drv,
+                              int index); };
+
+In this case, either enter() or enter_s2idle() would cause CFI check
+failed since they use same callee.
+
+Align function prototype of enter() since it needs return value for
+some use cases. The return value of enter_s2idle() is no
+need currently.
+
+Signed-off-by: Neal Liu <neal.liu@mediatek.com>
+Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+
+
+commit: 4bc799dcb67066e0531004d5bdbe755bb02b5488
+security: fix the key_permission LSM hook function type
+
+Commit 8c0637e950d6 ("keys: Make the KEY_NEED_* perms an enum rather than
+a mask") changed the type of the key_permission callback functions, but
+didn't change the type of the hook, which trips indirect call checking with
+Control-Flow Integrity (CFI). This change fixes the issue by changing the
+hook type to match the functions.
+
+Fixes: 8c0637e950d6 ("keys: Make the KEY_NEED_* perms an enum rather than a mask")
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Acked-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: James Morris <jmorris@namei.org>
+
+
+commit: 7fdc66debebc6a7170a37c8c9b0d9585a9788fb4
+hv_netvsc: Fix netvsc_start_xmit's return type
+
+netvsc_start_xmit is used as a callback function for the ndo_start_xmit
+function pointer. ndo_start_xmit's return type is netdev_tx_t but
+netvsc_start_xmit's return type is int.
+
+This causes a failure with Control Flow Integrity (CFI), which requires
+function pointer prototypes and callback function definitions to match
+exactly. When CFI is in enforcing, the kernel panics. When booting a
+CFI kernel with WSL 2, the VM is immediately terminated because of this.
+
+The splat when CONFIG_CFI_PERMISSIVE is used:
+
+[    5.916765] CFI failure (target: netvsc_start_xmit+0x0/0x10):
+[    5.916771] WARNING: CPU: 8 PID: 0 at kernel/cfi.c:29 __cfi_check_fail+0x2e/0x40
+[    5.916772] Modules linked in:
+[    5.916774] CPU: 8 PID: 0 Comm: swapper/8 Not tainted 5.7.0-rc3-next-20200424-microsoft-cbl-00001-ged4eb37d2c69-dirty #1
+[    5.916776] RIP: 0010:__cfi_check_fail+0x2e/0x40
+[    5.916777] Code: 48 c7 c7 70 98 63 a9 48 c7 c6 11 db 47 a9 e8 69 55 59 00 85 c0 75 02 5b c3 48 c7 c7 73 c6 43 a9 48 89 de 31 c0 e8 12 2d f0 ff <0f> 0b 5b c3 00 00 cc cc 00 00 cc cc 00 00 cc cc 00 00 85 f6 74 25
+[    5.916778] RSP: 0018:ffffa803c0260b78 EFLAGS: 00010246
+[    5.916779] RAX: 712a1af25779e900 RBX: ffffffffa8cf7950 RCX: ffffffffa962cf08
+[    5.916779] RDX: ffffffffa9c36b60 RSI: 0000000000000082 RDI: ffffffffa9c36b5c
+[    5.916780] RBP: ffff8ffc4779c2c0 R08: 0000000000000001 R09: ffffffffa9c3c300
+[    5.916781] R10: 0000000000000151 R11: ffffffffa9c36b60 R12: ffff8ffe39084000
+[    5.916782] R13: ffffffffa8cf7950 R14: ffffffffa8d12cb0 R15: ffff8ffe39320140
+[    5.916784] FS:  0000000000000000(0000) GS:ffff8ffe3bc00000(0000) knlGS:0000000000000000
+[    5.916785] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[    5.916786] CR2: 00007ffef5749408 CR3: 00000002f4f5e000 CR4: 0000000000340ea0
+[    5.916787] Call Trace:
+[    5.916788]  <IRQ>
+[    5.916790]  __cfi_check+0x3ab58/0x450e0
+[    5.916793]  ? dev_hard_start_xmit+0x11f/0x160
+[    5.916795]  ? sch_direct_xmit+0xf2/0x230
+[    5.916796]  ? __dev_queue_xmit.llvm.11471227737707190958+0x69d/0x8e0
+[    5.916797]  ? neigh_resolve_output+0xdf/0x220
+[    5.916799]  ? neigh_connected_output.cfi_jt+0x8/0x8
+[    5.916801]  ? ip6_finish_output2+0x398/0x4c0
+[    5.916803]  ? nf_nat_ipv6_out+0x10/0xa0
+[    5.916804]  ? nf_hook_slow+0x84/0x100
+[    5.916807]  ? ip6_input_finish+0x8/0x8
+[    5.916807]  ? ip6_output+0x6f/0x110
+[    5.916808]  ? __ip6_local_out.cfi_jt+0x8/0x8
+[    5.916810]  ? mld_sendpack+0x28e/0x330
+[    5.916811]  ? ip_rt_bug+0x8/0x8
+[    5.916813]  ? mld_ifc_timer_expire+0x2db/0x400
+[    5.916814]  ? neigh_proxy_process+0x8/0x8
+[    5.916816]  ? call_timer_fn+0x3d/0xd0
+[    5.916817]  ? __run_timers+0x2a9/0x300
+[    5.916819]  ? rcu_core_si+0x8/0x8
+[    5.916820]  ? run_timer_softirq+0x14/0x30
+[    5.916821]  ? __do_softirq+0x154/0x262
+[    5.916822]  ? native_x2apic_icr_write+0x8/0x8
+[    5.916824]  ? irq_exit+0xba/0xc0
+[    5.916825]  ? hv_stimer0_vector_handler+0x99/0xe0
+[    5.916826]  ? hv_stimer0_callback_vector+0xf/0x20
+[    5.916826]  </IRQ>
+[    5.916828]  ? hv_stimer_global_cleanup.cfi_jt+0x8/0x8
+[    5.916829]  ? raw_setsockopt+0x8/0x8
+[    5.916830]  ? default_idle+0xe/0x10
+[    5.916832]  ? do_idle.llvm.10446269078108580492+0xb7/0x130
+[    5.916833]  ? raw_setsockopt+0x8/0x8
+[    5.916833]  ? cpu_startup_entry+0x15/0x20
+[    5.916835]  ? cpu_hotplug_enable.cfi_jt+0x8/0x8
+[    5.916836]  ? start_secondary+0x188/0x190
+[    5.916837]  ? secondary_startup_64+0xa5/0xb0
+[    5.916838] ---[ end trace f2683fa869597ba5 ]---
+
+Avoid this by using the right return type for netvsc_start_xmit.
+
+Fixes: fceaf24a943d8 ("Staging: hv: add the Hyper-V virtual network driver")
+Link: https://github.com/ClangBuiltLinux/linux/issues/1009
+Signed-off-by: Nathan Chancellor <natechancellor@gmail.com>
+Reviewed-by: Haiyang Zhang <haiyangz@microsoft.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+
+
+commit: 6320a15e98301b67ff9ba8512e1e3a4033007851
+crypto: arm64/sha - fix function types
+
+Instead of casting pointers to callback functions, add C wrappers
+to avoid type mismatch failures with Control-Flow Integrity (CFI)
+checking.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Ard Biesheuvel <ardb@kernel.org>
+Reviewed-by: Eric Biggers <ebiggers@kernel.org>
+Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
+
+
+commit: cd4771f7709211082cbc41dc1f5b2be774ef1604
+Merge branch 'x86-entry-for-linus' of git://git.kernel.org/pub/scm/linux/kernel/git/tip/tip
+
+Pull x86 syscall entry updates from Ingo Molnar:
+ "These changes relate to the preparatory cleanup of syscall function
+  type signatures - to fix indirect call mismatches with Control-Flow
+  Integrity (CFI) checking.
+
+  No change in behavior intended"
+
+* 'x86-entry-for-linus' of git://git.kernel.org/pub/scm/linux/kernel/git/tip/tip:
+  x86/mm: Use the correct function type for native_set_fixmap()
+  syscalls/x86: Fix function types in COND_SYSCALL
+  syscalls/x86: Use the correct function type for sys_ni_syscall
+  syscalls/x86: Use COMPAT_SYSCALL_DEFINE0 for IA32 (rt_)sigreturn
+  syscalls/x86: Wire up COMPAT_SYSCALL_DEFINE0
+  syscalls/x86: Use the correct function type in SYSCALL_DEFINE0
+
+
+commit: 492c88720d36eb662f9f10c1633f7726fbb07fc4
+driver core: platform: use the correct callback type for bus_find_device
+
+platform_find_device_by_driver calls bus_find_device and passes
+platform_match as the callback function. Casting the function to a
+mismatching type trips indirect call Control-Flow Integrity (CFI) checking.
+
+This change adds a callback function with the correct type and instead
+of casting the function, explicitly casts the second parameter to struct
+device_driver* as expected by platform_match.
+
+Fixes: 36f3313d6bff9 ("platform: Add platform_find_device_by_driver() helper")
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Cc: stable <stable@vger.kernel.org>
+Link: https://lore.kernel.org/r/20191112214156.3430-1-samitolvanen@google.com
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+
+commit: f53e2cd0b8ab7d9e390414470bdbd830f660133f
+x86/mm: Use the correct function type for native_set_fixmap()
+
+We call native_set_fixmap indirectly through the function pointer
+struct pv_mmu_ops::set_fixmap, which expects the first parameter to be
+'unsigned' instead of 'enum fixed_addresses'. This patch changes the
+function type for native_set_fixmap to match the pointer, which fixes
+indirect call mismatches with Control-Flow Integrity (CFI) checking.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: H . Peter Anvin <hpa@zytor.com>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Rik van Riel <riel@surriel.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: https://lkml.kernel.org/r/20190913211402.193018-1-samitolvanen@google.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+
+
+commit: 6e4847640c6aebcaa2d9b3686cecc91b41f09269
+syscalls/x86: Fix function types in COND_SYSCALL
+
+Define a weak function in COND_SYSCALL instead of a weak alias to
+sys_ni_syscall(), which has an incompatible type. This fixes indirect
+call mismatches with Control-Flow Integrity (CFI) checking.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Acked-by: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: H . Peter Anvin <hpa@zytor.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: https://lkml.kernel.org/r/20191008224049.115427-6-samitolvanen@google.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+
+
+commit: f48f01a92cca09e86d46c91d8edf9d5a71c61727
+syscalls/x86: Use the correct function type for sys_ni_syscall
+
+Use the correct function type for sys_ni_syscall() in system
+call tables to fix indirect call mismatches with Control-Flow
+Integrity (CFI) checking.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Acked-by: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: H . Peter Anvin <hpa@zytor.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: https://lkml.kernel.org/r/20191008224049.115427-5-samitolvanen@google.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+
+
+commit: 00198a6eaf66609de5e4de9163bb42c7ca9dd7b7
+syscalls/x86: Use COMPAT_SYSCALL_DEFINE0 for IA32 (rt_)sigreturn
+
+Use COMPAT_SYSCALL_DEFINE0 to define (rt_)sigreturn() syscalls to
+replace sys32_sigreturn() and sys32_rt_sigreturn(). This fixes indirect
+call mismatches with Control-Flow Integrity (CFI) checking.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Acked-by: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: H . Peter Anvin <hpa@zytor.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: https://lkml.kernel.org/r/20191008224049.115427-4-samitolvanen@google.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+
+
+commit: 8661d769ab77c675b5eb6c3351a372b9fbc1bf40
+syscalls/x86: Use the correct function type in SYSCALL_DEFINE0
+
+Although a syscall defined using SYSCALL_DEFINE0 doesn't accept
+parameters, use the correct function type to avoid type mismatches
+with Control-Flow Integrity (CFI) checking.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Acked-by: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: H . Peter Anvin <hpa@zytor.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: https://lkml.kernel.org/r/20191008224049.115427-2-samitolvanen@google.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+
+
+commit: c27eccfe4d6c7481ce99f1c433ca043ab464080a
+arm64: fix function types in COND_SYSCALL
+
+Define a weak function in COND_SYSCALL instead of a weak alias to
+sys_ni_syscall, which has an incompatible type. This fixes indirect
+call mismatches with Control-Flow Integrity (CFI) checking.
+
+Acked-by: Mark Rutland <mark.rutland@arm.com>
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Will Deacon <will@kernel.org>
+
+
+commit: 05423b241311c9380b7280179295bac7794281b6
+vlan: allow null VLAN ID to be used
+
+We currently use a 16 bit field (vlan_tci) to store VLAN ID/PRIO on a skb.
+
+Null value is used as a special value, meaning vlan tagging not enabled.
+This forbids use of null vlan ID.
+
+As pointed by David, some drivers use the 3 high order bits (PRIO)
+
+As VLAN ID is 12 bits, we can use the remaining bit (CFI) as a flag, and
+allow null VLAN ID.
+
+In case future code really wants to use VLAN_CFI_MASK, we'll have to use
+a bit outside of vlan_tci.
+
+#define VLAN_PRIO_MASK         0xe000 /* Priority Code Point */
+#define VLAN_PRIO_SHIFT        13
+#define VLAN_CFI_MASK          0x1000 /* Canonical Format Indicator */
+#define VLAN_TAG_PRESENT       VLAN_CFI_MASK
+#define VLAN_VID_MASK          0x0fff /* VLAN Identifier */
+
+Reported-by: Gertjan Hofman <gertjan_hofman@yahoo.com>
+Signed-off-by: Eric Dumazet <eric.dumazet@gmail.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+
+
+commit: 4f0f586bf0c898233d8f316f471a21db2abd522d
+treewide: Change list_sort to use const pointers
+
+list_sort() internally casts the comparison function passed to it
+to a different type with constant struct list_head pointers, and
+uses this pointer to call the functions, which trips indirect call
+Control-Flow Integrity (CFI) checking.
+
+Instead of removing the consts, this change defines the
+list_cmp_func_t type and changes the comparison function types of
+all list_sort() callers to use const pointers, thus avoiding type
+mismatches.
+
+Suggested-by: Nick Desaulniers <ndesaulniers@google.com>
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Nick Desaulniers <ndesaulniers@google.com>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Tested-by: Nick Desaulniers <ndesaulniers@google.com>
+Tested-by: Nathan Chancellor <nathan@kernel.org>
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Link: https://lore.kernel.org/r/20210408182843.1754385-10-samitolvanen@google.com
+
+
+commit: 2bf2346159bc99cf0679e25be20f4daca60f3f5c
+remoteproc: core: Remove casting to rproc_handle_resource_t
+
+There are four different callback functions that are used for the
+rproc_handle_resource_t callback that all have different second
+parameter types.
+
+rproc_handle_vdev -> struct fw_rsc_vdev
+rproc_handle_trace -> struct fw_rsc_trace
+rproc_handle_devmem -> struct fw_rsc_devmem
+rproc_handle_carveout -> struct fw_rsc_carveout
+
+These callbacks are cast to rproc_handle_resource_t so that there is no
+error about incompatible pointer types. Unfortunately, this is a Clang's
+Control-Flow Integrity checking violation, which verifies that the
+callback function's types match the prototypes exactly before jumping.
+
+[    7.275750] Kernel panic - not syncing: CFI failure (target: rproc_handle_vdev+0x0/0x4)
+[    7.283763] CPU: 2 PID: 1 Comm: init Tainted: G         C O      5.4.70-03301-g527af2c96672 #17
+[    7.292463] Hardware name: NXP i.MX8MPlus EVK board (DT)
+[    7.297779] Call trace:
+[    7.300232]  dump_backtrace.cfi_jt+0x0/0x4
+[    7.304337]  show_stack+0x18/0x24
+[    7.307660]  dump_stack+0xb8/0x114
+[    7.311069]  panic+0x164/0x3d4
+[    7.314130]  __ubsan_handle_cfi_check_fail_abort+0x0/0x14
+[    7.319533]  perf_proc_update_handler+0x0/0xcc
+[    7.323983]  __cfi_check+0x63278/0x6a290
+[    7.327913]  rproc_boot+0x3f8/0x738
+[    7.331404]  rproc_add+0x68/0x110
+[    7.334738]  imx_rproc_probe+0x5e4/0x708 [imx_rproc]
+[    7.339711]  platform_drv_probe+0xac/0xf0
+[    7.343726]  really_probe+0x260/0x65c
+[    7.347393]  driver_probe_device+0x64/0x100
+[    7.351580]  device_driver_attach+0x6c/0xac
+[    7.355766]  __driver_attach+0xdc/0x184
+[    7.359609]  bus_for_each_dev+0x98/0x104
+[    7.363537]  driver_attach+0x24/0x30
+[    7.367117]  bus_add_driver+0x100/0x1e0
+[    7.370958]  driver_register+0x78/0x114
+[    7.374800]  __platform_driver_register+0x44/0x50
+[    7.379514]  init_module+0x20/0xfe8 [imx_rproc]
+[    7.384049]  do_one_initcall+0x190/0x348
+[    7.387979]  do_init_module+0x5c/0x210
+[    7.391731]  load_module+0x2fbc/0x3590
+[    7.395485]  __arm64_sys_finit_module+0xb8/0xec
+[    7.400025]  el0_svc_common+0xb4/0x19c
+[    7.403777]  el0_svc_handler+0x74/0x98
+[    7.407531]  el0_svc+0x8/0xc
+[    7.410419] SMP: stopping secondary CPUs
+[    7.414648] Kernel Offset: disabled
+[    7.418142] CPU features: 0x00010002,2000200c
+[    7.422501] Memory Limit: none
+
+To fix this, change the second parameter of all functions to void * and
+use a local variable with the correct type so that everything works
+properly. With this, we can remove casting to rproc_handle_resource_t
+for these functions.
+
+Signed-off-by: Jindong Yue <jindong.yue@nxp.com>
+Reviewed-by: Peng Fan <peng.fan@nxp.com>
+Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Mathieu Poirier <mathieu.poirier@linaro.org>
+Link: https://lore.kernel.org/r/20210224055825.7417-1-jindong.yue@nxp.com
+Signed-off-by: Bjorn Andersson <bjorn.andersson@linaro.org>
+
+
+commit: 32fc4a9ad56f8260025ac766548d625509cc879f
+cfg80211: fix callback type mismatches in wext-compat
+
+Instead of casting callback functions to type iw_handler, which trips
+indirect call checking with Clang's Control-Flow Integrity (CFI), add
+stub functions with the correct function type for the callbacks.
+
+Reported-by: Sedat Dilek <sedat.dilek@gmail.com>
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Link: https://lore.kernel.org/r/20201117205902.405316-1-samitolvanen@google.com
+Signed-off-by: Johannes Berg <johannes.berg@intel.com>
+
+
+commit: 83321c335dccba262a57378361d63da96b8166d6
+x86/pci: Fix the function type for check_reserved_t
+
+e820__mapped_all() is passed as a callback to is_mmconf_reserved(),
+which expects a function of type:
+
+  typedef bool (*check_reserved_t)(u64 start, u64 end, unsigned type);
+
+However, e820__mapped_all() accepts enum e820_type as the last argument
+and this type mismatch trips indirect call checking with Clang's
+Control-Flow Integrity (CFI).
+
+As is_mmconf_reserved() only passes enum e820_type values for the
+type argument, change the typedef and the unused type argument in
+is_acpi_reserved() to enum e820_type to fix the type mismatch.
+
+Reported-by: Sedat Dilek <sedat.dilek@gmail.com>
+Suggested-by: Borislav Petkov <bp@alien8.de>
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Borislav Petkov <bp@suse.de>
+Link: https://lkml.kernel.org/r/20201130193900.456726-1-samitolvanen@google.com
+
+
+commit: 983df5f2699f83f78643b19d3399b160d1e64f5b
+samples/ftrace: Mark my_tramp[12]? global
+
+my_tramp[12]? are declared as global functions in C, but they are not
+marked global in the inline assembly definition. This mismatch confuses
+Clang's Control-Flow Integrity checking. Fix the definitions by adding
+.globl.
+
+Link: https://lkml.kernel.org/r/20201113183414.1446671-1-samitolvanen@google.com
+
+Fixes: 9d907f1ae80b8 ("ftrace/samples: Add a sample module that implements modify_ftrace_direct()")
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+
+
+commit: ebd19fc372e3e78bf165f230e7c084e304441c08
+perf/x86: fix sysfs type mismatches
+
+This change switches rapl to use PMU_FORMAT_ATTR, and fixes two other
+macros to use device_attribute instead of kobj_attribute to avoid
+callback type mismatches that trip indirect call checking with Clang's
+Control-Flow Integrity (CFI).
+
+Reported-by: Sedat Dilek <sedat.dilek@gmail.com>
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Link: https://lkml.kernel.org/r/20201113183126.1239404-1-samitolvanen@google.com
+
+
+commit: 4bc799dcb67066e0531004d5bdbe755bb02b5488
+security: fix the key_permission LSM hook function type
+
+Commit 8c0637e950d6 ("keys: Make the KEY_NEED_* perms an enum rather than
+a mask") changed the type of the key_permission callback functions, but
+didn't change the type of the hook, which trips indirect call checking with
+Control-Flow Integrity (CFI). This change fixes the issue by changing the
+hook type to match the functions.
+
+Fixes: 8c0637e950d6 ("keys: Make the KEY_NEED_* perms an enum rather than a mask")
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Acked-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: James Morris <jmorris@namei.org>
+
+
+commit: 6320a15e98301b67ff9ba8512e1e3a4033007851
+crypto: arm64/sha - fix function types
+
+Instead of casting pointers to callback functions, add C wrappers
+to avoid type mismatch failures with Control-Flow Integrity (CFI)
+checking.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Ard Biesheuvel <ardb@kernel.org>
+Reviewed-by: Eric Biggers <ebiggers@kernel.org>
+Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
+
+
+commit: 492c88720d36eb662f9f10c1633f7726fbb07fc4
+driver core: platform: use the correct callback type for bus_find_device
+
+platform_find_device_by_driver calls bus_find_device and passes
+platform_match as the callback function. Casting the function to a
+mismatching type trips indirect call Control-Flow Integrity (CFI) checking.
+
+This change adds a callback function with the correct type and instead
+of casting the function, explicitly casts the second parameter to struct
+device_driver* as expected by platform_match.
+
+Fixes: 36f3313d6bff9 ("platform: Add platform_find_device_by_driver() helper")
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Cc: stable <stable@vger.kernel.org>
+Link: https://lore.kernel.org/r/20191112214156.3430-1-samitolvanen@google.com
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+
+commit: f53e2cd0b8ab7d9e390414470bdbd830f660133f
+x86/mm: Use the correct function type for native_set_fixmap()
+
+We call native_set_fixmap indirectly through the function pointer
+struct pv_mmu_ops::set_fixmap, which expects the first parameter to be
+'unsigned' instead of 'enum fixed_addresses'. This patch changes the
+function type for native_set_fixmap to match the pointer, which fixes
+indirect call mismatches with Control-Flow Integrity (CFI) checking.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: H . Peter Anvin <hpa@zytor.com>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Rik van Riel <riel@surriel.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: https://lkml.kernel.org/r/20190913211402.193018-1-samitolvanen@google.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+
+
+commit: 6e4847640c6aebcaa2d9b3686cecc91b41f09269
+syscalls/x86: Fix function types in COND_SYSCALL
+
+Define a weak function in COND_SYSCALL instead of a weak alias to
+sys_ni_syscall(), which has an incompatible type. This fixes indirect
+call mismatches with Control-Flow Integrity (CFI) checking.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Acked-by: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: H . Peter Anvin <hpa@zytor.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: https://lkml.kernel.org/r/20191008224049.115427-6-samitolvanen@google.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+
+
+commit: 00198a6eaf66609de5e4de9163bb42c7ca9dd7b7
+syscalls/x86: Use COMPAT_SYSCALL_DEFINE0 for IA32 (rt_)sigreturn
+
+Use COMPAT_SYSCALL_DEFINE0 to define (rt_)sigreturn() syscalls to
+replace sys32_sigreturn() and sys32_rt_sigreturn(). This fixes indirect
+call mismatches with Control-Flow Integrity (CFI) checking.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Acked-by: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: H . Peter Anvin <hpa@zytor.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: https://lkml.kernel.org/r/20191008224049.115427-4-samitolvanen@google.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+
+
+commit: 8661d769ab77c675b5eb6c3351a372b9fbc1bf40
+syscalls/x86: Use the correct function type in SYSCALL_DEFINE0
+
+Although a syscall defined using SYSCALL_DEFINE0 doesn't accept
+parameters, use the correct function type to avoid type mismatches
+with Control-Flow Integrity (CFI) checking.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Acked-by: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: H . Peter Anvin <hpa@zytor.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: https://lkml.kernel.org/r/20191008224049.115427-2-samitolvanen@google.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+
+
+commit: c27eccfe4d6c7481ce99f1c433ca043ab464080a
+arm64: fix function types in COND_SYSCALL
+
+Define a weak function in COND_SYSCALL instead of a weak alias to
+sys_ni_syscall, which has an incompatible type. This fixes indirect
+call mismatches with Control-Flow Integrity (CFI) checking.
+
+Acked-by: Mark Rutland <mark.rutland@arm.com>
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Will Deacon <will@kernel.org>
+
+
+commit: d322a8e5e3e9742fa6b76a207e5df57e03f318f9
+mm/filemap.c: fix an overly long line in read_cache_page
+
+Patch series "fix filler_t callback type mismatches", v2.
+
+Casting mapping->a_ops->readpage to filler_t causes an indirect call
+type mismatch with Control-Flow Integrity checking.  This change fixes
+the mismatch in read_cache_page_gfp and read_mapping_page by adding
+using a NULL filler argument as an indication to call ->readpage
+directly, and by passing the right parameter callbacks in nfs and jffs2.
+
+This patch (of 4):
+
+Code cleanup.
+
+Link: http://lkml.kernel.org/r/20190520055731.24538-2-hch@lst.de
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Cc: Nick Desaulniers <ndesaulniers@google.com>
+Cc: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+
+
+commit: 1e29ab3186e33c77dbb2d7566172a205b59fa390
+arm64: use the correct function type for __arm64_sys_ni_syscall
+
+Calling sys_ni_syscall through a syscall_fn_t pointer trips indirect
+call Control-Flow Integrity checking due to a function type
+mismatch. Use SYSCALL_DEFINE0 for __arm64_sys_ni_syscall instead and
+remove the now unnecessary casts.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Will Deacon <will.deacon@arm.com>
+
+
+commit: 0e358bd7b7ebd27e491dabed938eae254c17fe3b
+arm64: use the correct function type in SYSCALL_DEFINE0
+
+Although a syscall defined using SYSCALL_DEFINE0 doesn't accept
+parameters, use the correct function type to avoid indirect call
+type mismatches with Control-Flow Integrity checking.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Will Deacon <will.deacon@arm.com>
+
+
+commit: 8ef8f368ce72b5e17f7c1f1ef15c38dcfd0fef64
+arm64: fix syscall_fn_t type
+
+Syscall wrappers in <asm/syscall_wrapper.h> use const struct pt_regs *
+as the argument type. Use const in syscall_fn_t as well to fix indirect
+call type mismatches with Control-Flow Integrity checking.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Mark Rutland <mark.rutland@arm.com>
+Signed-off-by: Will Deacon <will.deacon@arm.com>
+
+
+commit: 3ad3b7a2ebaefae37a7eafed0779324987ca5e56
+media: v4l2-ioctl: replace IOCTL_INFO_STD with stub functions
+
+This change removes IOCTL_INFO_STD and adds stub functions where
+needed using the DEFINE_V4L_STUB_FUNC macro. This fixes indirect call
+mismatches with Control-Flow Integrity, caused by calling standard
+ioctls using a function pointer that doesn't match the function type.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Hans Verkuil <hansverk@cisco.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+samsung@kernel.org>
+
+
+commit: daa36370b62428cca6d48d1b2530a8419f631c8c
+media: media-device: fix ioctl function types
+
+This change fixes function types for media device ioctls to avoid
+indirect call mismatches with Control-Flow Integrity checking.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Acked-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Hans Verkuil <hans.verkuil@cisco.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+samsung@kernel.org>
+
+
+commit: 1f686f2b3e17505b00c9e8ff88354debc843d94d
+Merge branch 'wireguard-patches-for-5-18-rc1'
+
+Jason A. Donenfeld says:
+
+====================
+wireguard patches for 5.18-rc1
+
+Here's a small set of fixes for the next net push:
+
+1) Pipacs reported a CFI violation in a cleanup routine, which he
+   triggered using grsec's RAP. I haven't seen reports of this yet from
+   the Android/CFI world yet, but it's only a matter of time there.
+
+2) A small rng cleanup to the self test harness to make it initialize
+   faster on 5.18.
+
+3) Wang reported and fixed a skb leak for CONFIG_IPV6=n.
+
+4) After Wang's fix for the direct leak, I investigated how that code
+   path even could be hit, and found that the netlink layer still
+   handles IPv6 endpoints, when it probably shouldn't.
+====================
+
+Link: https://lore.kernel.org/r/20220330013127.426620-1-Jason@zx2c4.com
+Signed-off-by: Jakub Kicinski <kuba@kernel.org>
+
+
+commit: 5e6928249b81b4d8727ab6a4037a171d15455cb0
+Merge tag 'acpi-5.14-rc1' of git://git.kernel.org/pub/scm/linux/kernel/git/rafael/linux-pm
+
+Pull ACPI updates from Rafael Wysocki:
+ "These update the ACPICA code in the kernel to the 20210604 upstream
+  revision, add preliminary support for the Platform Runtime Mechanism
+  (PRM), address issues related to the handling of device dependencies
+  in the ACPI device eunmeration code, improve the tracking of ACPI
+  power resource states, improve the ACPI support for suspend-to-idle on
+  AMD systems, continue the unification of message printing in the ACPI
+  code, address assorted issues and clean up the code in a number of
+  places.
+
+  Specifics:
+
+   - Update ACPICA code in the kernel to upstrea revision 20210604
+     including the following changes:
+
+      - Add defines for the CXL Host Bridge Structureand and add the
+        CFMWS structure definition to CEDT (Alison Schofield).
+      - iASL: Finish support for the IVRS ACPI table (Bob Moore).
+      - iASL: Add support for the SVKL table (Bob Moore).
+      - iASL: Add full support for RGRT ACPI table (Bob Moore).
+      - iASL: Add support for the BDAT ACPI table (Bob Moore).
+      - iASL: add disassembler support for PRMT (Erik Kaneda).
+      - Fix memory leak caused by _CID repair function (Erik Kaneda).
+      - Add support for PlatformRtMechanism OpRegion (Erik Kaneda).
+      - Add PRMT module header to facilitate parsing (Erik Kaneda).
+      - Add _PLD panel positions (Fabian Wüthrich).
+      - MADT: add Multiprocessor Wakeup Mailbox Structure and the SVKL
+        table headers (Kuppuswamy Sathyanarayanan).
+      - Use ACPI_FALLTHROUGH (Wei Ming Chen).
+
+   - Add preliminary support for the Platform Runtime Mechanism (PRM) to
+     allow the AML interpreter to call PRM functions (Erik Kaneda).
+
+   - Address some issues related to the handling of device dependencies
+     reported by _DEP in the ACPI device enumeration code and clean up
+     some related pieces of it (Rafael Wysocki).
+
+   - Improve the tracking of states of ACPI power resources (Rafael
+     Wysocki).
+
+   - Improve ACPI support for suspend-to-idle on AMD systems (Alex
+     Deucher, Mario Limonciello, Pratik Vishwakarma).
+
+   - Continue the unification and cleanup of message printing in the
+     ACPI code (Hanjun Guo, Heiner Kallweit).
+
+   - Fix possible buffer overrun issue with the description_show() sysfs
+     attribute method (Krzysztof Wilczyński).
+
+   - Improve the acpi_mask_gpe kernel command line parameter handling
+     and clean up the core ACPI code related to sysfs (Andy Shevchenko,
+     Baokun Li, Clayton Casciato).
+
+   - Postpone bringing devices in the general ACPI PM domain to D0
+     during resume from system-wide suspend until they are really needed
+     (Dmitry Torokhov).
+
+   - Make the ACPI processor driver fix up C-state latency if not
+     ordered (Mario Limonciello).
+
+   - Add support for identifying devices depening on the given one that
+     are not its direct descendants with the help of _DEP (Daniel
+     Scally).
+
+   - Extend the checks related to ACPI IRQ overrides on x86 in order to
+     avoid false-positives (Hui Wang).
+
+   - Add battery DPTF participant for Intel SoCs (Sumeet Pawnikar).
+
+   - Rearrange the ACPI fan driver and device power management code to
+     use a common list of device IDs (Rafael Wysocki).
+
+   - Fix clang CFI violation in the ACPI BGRT table parsing code and
+     clean it up (Nathan Chancellor).
+
+   - Add GPE-related quirks for some laptops to the EC driver (Chris
+     Chiu, Zhang Rui).
+
+   - Make the ACPI PPTT table parsing code populate the cache-id value
+     if present in the firmware (James Morse).
+
+   - Remove redundant clearing of context->ret.pointer from
+     acpi_run_osc() (Hans de Goede).
+
+   - Add missing acpi_put_table() in acpi_init_fpdt() (Jing Xiangfeng).
+
+   - Make ACPI APEI handle ARM Processor Error CPER records like Memory
+     Error ones to avoid user space task lockups (Xiaofei Tan).
+
+   - Stop warning about disabled ACPI in APEI (Jon Hunter).
+
+   - Fix fall-through warning for Clang in the SBSHC driver (Gustavo A.
+     R. Silva).
+
+   - Add custom DSDT file as Makefile prerequisite (Richard Fitzgerald).
+
+   - Initialize local variable to avoid garbage being returned (Colin
+     Ian King).
+
+   - Simplify assorted pieces of code, address assorted coding style and
+     documentation issues and comment typos (Baokun Li, Christophe
+     JAILLET, Clayton Casciato, Liu Shixin, Shaokun Zhang, Wei Yongjun,
+     Yang Li, Zhen Lei)"
+
+* tag 'acpi-5.14-rc1' of git://git.kernel.org/pub/scm/linux/kernel/git/rafael/linux-pm: (97 commits)
+  ACPI: PM: postpone bringing devices to D0 unless we need them
+  ACPI: tables: Add custom DSDT file as makefile prerequisite
+  ACPI: bgrt: Use sysfs_emit
+  ACPI: bgrt: Fix CFI violation
+  ACPI: EC: trust DSDT GPE for certain HP laptop
+  ACPI: scan: Simplify acpi_table_events_fn()
+  ACPI: PM: Adjust behavior for field problems on AMD systems
+  ACPI: PM: s2idle: Add support for new Microsoft UUID
+  ACPI: PM: s2idle: Add support for multiple func mask
+  ACPI: PM: s2idle: Refactor common code
+  ACPI: PM: s2idle: Use correct revision id
+  ACPI: sysfs: Remove tailing return statement in void function
+  ACPI: sysfs: Use __ATTR_RO() and __ATTR_RW() macros
+  ACPI: sysfs: Sort headers alphabetically
+  ACPI: sysfs: Refactor param_get_trace_state() to drop dead code
+  ACPI: sysfs: Unify pattern of memory allocations
+  ACPI: sysfs: Allow bitmap list to be supplied to acpi_mask_gpe
+  ACPI: sysfs: Make sparse happy about address space in use
+  ACPI: scan: Fix race related to dropping dependencies
+  ACPI: scan: Reorganize acpi_device_add()
+  ...
+
+
+commit: dfef7710d749617513a6c8c2bfb29ba415dab7e8
+Merge branches 'acpi-bus', 'acpi-scan' and 'acpi-tables'
+
+* acpi-bus:
+  ACPI: Remove redundant clearing of context->ret.pointer from acpi_run_osc()
+
+* acpi-scan:
+  ACPI: scan: Simplify acpi_table_events_fn()
+  ACPI: scan: Fix race related to dropping dependencies
+  ACPI: scan: Reorganize acpi_device_add()
+  ACPI: scan: Fix device object rescan in acpi_scan_clear_dep()
+  ACPI: scan: Make acpi_walk_dep_device_list()
+  ACPI: scan: Rearrange acpi_dev_get_first_consumer_dev_cb()
+  ACPI: scan: Define acpi_bus_put_acpi_device() as static inline
+  ACPI: scan: initialize local variable to avoid garbage being returned
+  ACPI: scan: Add function to fetch dependent of ACPI device
+  ACPI: scan: Extend acpi_walk_dep_device_list()
+  ACPI: scan: Rearrange dep_unmet initialization
+
+* acpi-tables:
+  ACPI: tables: Add custom DSDT file as makefile prerequisite
+  ACPI: bgrt: Use sysfs_emit
+  ACPI: bgrt: Fix CFI violation
+  ACPI: tables: FPDT: Add missing acpi_put_table() in acpi_init_fpdt()
+  ACPI: tables: PPTT: Populate cache-id if provided by firmware
+
+
+commit: f37ccf8fce155d08ae2a4fb3db677911ced0c21a
+ACPI: bgrt: Fix CFI violation
+
+clang's Control Flow Integrity requires that every indirect call has a
+valid target, which is based on the type of the function pointer. The
+*_show() functions in this file are written as if they will be called
+from dev_attr_show(); however, they will be called from
+sysfs_kf_seq_show() because the files were created by
+sysfs_create_group() and the sysfs ops are based on kobj_sysfs_ops
+because of kobject_add_and_create(). Because the *_show() functions do
+not match the type of the show() member in struct kobj_attribute, there
+is a CFI violation.
+
+$ cat /sys/firmware/acpi/bgrt/{status,type,version,{x,y}offset}}
+1
+0
+1
+522
+307
+
+$ dmesg | grep "CFI failure"
+[  267.761825] CFI failure (target: type_show.d5e1ad21498a5fd14edbc5c320906598.cfi_jt+0x0/0x8):
+[  267.762246] CFI failure (target: xoffset_show.d5e1ad21498a5fd14edbc5c320906598.cfi_jt+0x0/0x8):
+[  267.762584] CFI failure (target: status_show.d5e1ad21498a5fd14edbc5c320906598.cfi_jt+0x0/0x8):
+[  267.762973] CFI failure (target: yoffset_show.d5e1ad21498a5fd14edbc5c320906598.cfi_jt+0x0/0x8):
+[  267.763330] CFI failure (target: version_show.d5e1ad21498a5fd14edbc5c320906598.cfi_jt+0x0/0x8):
+
+Convert these functions to the type of the show() member in struct
+kobj_attribute so that there is no more CFI violation. Because these
+functions are all so similar, combine them into a macro.
+
+Fixes: d1ff4b1cdbab ("ACPI: Add support for exposing BGRT data")
+Link: https://github.com/ClangBuiltLinux/linux/issues/1406
+Signed-off-by: Nathan Chancellor <nathan@kernel.org>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+
+
+commit: 5deac80d4571dffb51f452f0027979d72259a1b9
+perf/amd/uncore: Fix sysfs type mismatch
+
+dev_attr_show() calls the __uncore_*_show() functions via an indirect
+call but their type does not currently match the type of the show()
+member in 'struct device_attribute', resulting in a Control Flow
+Integrity violation.
+
+$ cat /sys/devices/amd_l3/format/umask
+config:8-15
+
+$ dmesg | grep "CFI failure"
+[ 1258.174653] CFI failure (target: __uncore_umask_show...):
+
+Update the type in the DEFINE_UNCORE_FORMAT_ATTR macro to match
+'struct device_attribute' so that there is no more CFI violation.
+
+Fixes: 06f2c24584f3 ("perf/amd/uncore: Prepare to scale for more attributes that vary per family")
+Signed-off-by: Nathan Chancellor <nathan@kernel.org>
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Link: https://lkml.kernel.org/r/20210415001112.3024673-2-nathan@kernel.org
+
+
+commit: de5bc7b425d4c27ae5faa00ea7eb6b9780b9a355
+x86/events/amd/iommu: Fix sysfs type mismatch
+
+dev_attr_show() calls _iommu_event_show() via an indirect call but
+_iommu_event_show()'s type does not currently match the type of the
+show() member in 'struct device_attribute', resulting in a Control Flow
+Integrity violation.
+
+$ cat /sys/devices/amd_iommu_1/events/mem_dte_hit
+csource=0x0a
+
+$ dmesg | grep "CFI failure"
+[ 3526.735140] CFI failure (target: _iommu_event_show...):
+
+Change _iommu_event_show() and 'struct amd_iommu_event_desc' to
+'struct device_attribute' so that there is no more CFI violation.
+
+Fixes: 7be6296fdd75 ("perf/x86/amd: AMD IOMMU Performance Counter PERF uncore PMU implementation")
+Signed-off-by: Nathan Chancellor <nathan@kernel.org>
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Link: https://lkml.kernel.org/r/20210415001112.3024673-1-nathan@kernel.org
+
+
+commit: e6d701dca9893990d999fd145e3e07223c002b06
+ACPI: sysfs: Fix pm_profile_attr type
+
+When running a kernel with Clang's Control Flow Integrity implemented,
+there is a violation that happens when accessing
+/sys/firmware/acpi/pm_profile:
+
+$ cat /sys/firmware/acpi/pm_profile
+0
+
+$ dmesg
+...
+[   17.352564] ------------[ cut here ]------------
+[   17.352568] CFI failure (target: acpi_show_profile+0x0/0x8):
+[   17.352572] WARNING: CPU: 3 PID: 497 at kernel/cfi.c:29 __cfi_check_fail+0x33/0x40
+[   17.352573] Modules linked in:
+[   17.352575] CPU: 3 PID: 497 Comm: cat Tainted: G        W         5.7.0-microsoft-standard+ #1
+[   17.352576] RIP: 0010:__cfi_check_fail+0x33/0x40
+[   17.352577] Code: 48 c7 c7 50 b3 85 84 48 c7 c6 50 0a 4e 84 e8 a4 d8 60 00 85 c0 75 02 5b c3 48 c7 c7 dc 5e 49 84 48 89 de 31 c0 e8 7d 06 eb ff <0f> 0b 5b c3 00 00 cc cc 00 00 cc cc 00 85 f6 74 25 41 b9 ea ff ff
+[   17.352577] RSP: 0018:ffffaa6dc3c53d30 EFLAGS: 00010246
+[   17.352578] RAX: 331267e0c06cee00 RBX: ffffffff83d85890 RCX: ffffffff8483a6f8
+[   17.352579] RDX: ffff9cceabbb37c0 RSI: 0000000000000082 RDI: ffffffff84bb9e1c
+[   17.352579] RBP: ffffffff845b2bc8 R08: 0000000000000001 R09: ffff9cceabbba200
+[   17.352579] R10: 000000000000019d R11: 0000000000000000 R12: ffff9cc947766f00
+[   17.352580] R13: ffffffff83d6bd50 R14: ffff9ccc6fa80000 R15: ffffffff845bd328
+[   17.352582] FS:  00007fdbc8d13580(0000) GS:ffff9cce91ac0000(0000) knlGS:0000000000000000
+[   17.352582] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[   17.352583] CR2: 00007fdbc858e000 CR3: 00000005174d0000 CR4: 0000000000340ea0
+[   17.352584] Call Trace:
+[   17.352586]  ? rev_id_show+0x8/0x8
+[   17.352587]  ? __cfi_check+0x45bac/0x4b640
+[   17.352589]  ? kobj_attr_show+0x73/0x80
+[   17.352590]  ? sysfs_kf_seq_show+0xc1/0x140
+[   17.352592]  ? ext4_seq_options_show.cfi_jt+0x8/0x8
+[   17.352593]  ? seq_read+0x180/0x600
+[   17.352595]  ? sysfs_create_file_ns.cfi_jt+0x10/0x10
+[   17.352596]  ? tlbflush_read_file+0x8/0x8
+[   17.352597]  ? __vfs_read+0x6b/0x220
+[   17.352598]  ? handle_mm_fault+0xa23/0x11b0
+[   17.352599]  ? vfs_read+0xa2/0x130
+[   17.352599]  ? ksys_read+0x6a/0xd0
+[   17.352601]  ? __do_sys_getpgrp+0x8/0x8
+[   17.352602]  ? do_syscall_64+0x72/0x120
+[   17.352603]  ? entry_SYSCALL_64_after_hwframe+0x44/0xa9
+[   17.352604] ---[ end trace 7b1fa81dc897e419 ]---
+
+When /sys/firmware/acpi/pm_profile is read, sysfs_kf_seq_show is called,
+which in turn calls kobj_attr_show, which gets the ->show callback
+member by calling container_of on attr (casting it to struct
+kobj_attribute) then calls it.
+
+There is a CFI violation because pm_profile_attr is of type
+struct device_attribute but kobj_attr_show calls ->show expecting it
+to be from struct kobj_attribute. CFI checking ensures that function
+pointer types match when doing indirect calls. Fix pm_profile_attr to
+be defined in terms of kobj_attribute so there is no violation or
+mismatch.
+
+Fixes: 362b646062b2 ("ACPI: Export FADT pm_profile integer value to userspace")
+Link: https://github.com/ClangBuiltLinux/linux/issues/1051
+Reported-by: yuu ichii <byahu140@heisei.be>
+Signed-off-by: Nathan Chancellor <natechancellor@gmail.com>
+Cc: 3.10+ <stable@vger.kernel.org> # 3.10+
+Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+
+

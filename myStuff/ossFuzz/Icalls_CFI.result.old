@@ -1,0 +1,2797 @@
+
+
+uriparser
+uri_free_fuzzer
+cfi lines:  3  iCalls:  283
+uri_dissect_query_malloc_fuzzer
+cfi lines:  2  iCalls:  262
+uri_parse_fuzzer
+cfi lines:  3  iCalls:  334
+
+
+civetweb
+
+
+json-c
+
+
+rocksdb
+db_map_fuzzer
+cfi lines:  160  iCalls:  10037
+db_fuzzer
+cfi lines:  158  iCalls:  8760
+
+
+grpc
+
+
+librawspeed
+TiffParserFuzzer-GetDecoder-Decode
+cfi lines:  45  iCalls:  941
+CrwDecompressorFuzzer
+cfi lines:  0  iCalls:  186
+PrefixCodeDecoderFuzzer-TreeVsVector
+cfi lines:  0  iCalls:  213
+Cr2DecompressorFuzzer-DummyPrefixCodeDecoder
+cfi lines:  0  iCalls:  186
+CiffParserFuzzer-GetDecoder
+cfi lines:  0  iCalls:  696
+TiffDecoderFuzzer-MosDecoder
+cfi lines:  0  iCalls:  738
+PrefixCodeDecoderTreeFuzzer
+cfi lines:  0  iCalls:  213
+TiffDecoderFuzzer-ErfDecoder
+cfi lines:  0  iCalls:  741
+TiffDecoderFuzzer-NefDecoder
+cfi lines:  0  iCalls:  754
+PrefixCodeDecoderVectorFuzzer
+cfi lines:  0  iCalls:  171
+RawSpeedFuzzer
+cfi lines:  45  iCalls:  976
+LJpegDecoderFuzzer
+cfi lines:  0  iCalls:  187
+SonyArw2DecompressorFuzzer
+cfi lines:  0  iCalls:  187
+OlympusDecompressorFuzzer
+cfi lines:  0  iCalls:  186
+PrefixCodeDecoderFuzzer-LUTVsTree
+cfi lines:  0  iCalls:  213
+TiffDecoderFuzzer-DngDecoder
+cfi lines:  13  iCalls:  838
+PrefixCodeDecoderFuzzer-LUTVsVector
+cfi lines:  0  iCalls:  171
+SamsungV0DecompressorFuzzer
+cfi lines:  0  iCalls:  186
+TiffDecoderFuzzer-MefDecoder
+cfi lines:  0  iCalls:  741
+PanasonicV4DecompressorFuzzer
+cfi lines:  0  iCalls:  186
+PrefixCodeDecoderFuzzer-LookupVsVector
+cfi lines:  0  iCalls:  171
+TiffDecoderFuzzer-KdcDecoder
+cfi lines:  0  iCalls:  744
+TiffDecoderFuzzer-Cr2Decoder
+cfi lines:  1  iCalls:  745
+TiffDecoderFuzzer-ThreefrDecoder
+cfi lines:  0  iCalls:  741
+KodakDecompressorFuzzer
+cfi lines:  0  iCalls:  184
+PrefixCodeDecoderLookupFuzzer
+cfi lines:  0  iCalls:  171
+PanasonicV5DecompressorFuzzer
+cfi lines:  0  iCalls:  186
+TiffDecoderFuzzer-DcsDecoder
+cfi lines:  1  iCalls:  742
+RawParserFuzzer-GetDecoder
+cfi lines:  45  iCalls:  971
+SamsungV1DecompressorFuzzer
+cfi lines:  0  iCalls:  186
+TiffParserFuzzer-GetDecoder
+cfi lines:  45  iCalls:  936
+TiffDecoderFuzzer-OrfDecoder
+cfi lines:  0  iCalls:  743
+FiffParserFuzzer-GetDecoder-Decode
+cfi lines:  0  iCalls:  760
+SamsungV2DecompressorFuzzer
+cfi lines:  0  iCalls:  186
+TiffDecoderFuzzer-SrwDecoder
+cfi lines:  0  iCalls:  745
+FiffParserFuzzer-GetDecoder
+cfi lines:  0  iCalls:  747
+PrefixCodeDecoderFuzzer-LookupVsTree
+cfi lines:  0  iCalls:  213
+CiffParserFuzzer-GetDecoder-Decode
+cfi lines:  0  iCalls:  709
+TiffDecoderFuzzer-Rw2Decoder
+cfi lines:  0  iCalls:  742
+PrefixCodeDecoderLUTFuzzer
+cfi lines:  0  iCalls:  171
+HasselbladDecompressorFuzzer
+cfi lines:  0  iCalls:  186
+Cr2DecompressorFuzzer-PrefixCodeDecoder
+cfi lines:  0  iCalls:  186
+DngOpcodesFuzzer
+cfi lines:  9  iCalls:  198
+HasselbladLJpegDecoderFuzzer
+cfi lines:  0  iCalls:  187
+TiffDecoderFuzzer-DcrDecoder
+cfi lines:  1  iCalls:  744
+TiffDecoderFuzzer-ArwDecoder
+cfi lines:  0  iCalls:  749
+Cr2LJpegDecoderFuzzer
+cfi lines:  0  iCalls:  187
+UncompressedDecompressorFuzzer
+cfi lines:  0  iCalls:  186
+PrefixCodeDecoderFuzzer-LUTVsLookup
+cfi lines:  0  iCalls:  171
+PanasonicV7DecompressorFuzzer
+cfi lines:  0  iCalls:  186
+TiffDecoderFuzzer-IiqDecoder
+cfi lines:  0  iCalls:  741
+LJpegDecompressorFuzzer
+cfi lines:  0  iCalls:  186
+PentaxDecompressorFuzzer
+cfi lines:  0  iCalls:  185
+RawParserFuzzer-GetDecoder-Decode
+cfi lines:  45  iCalls:  976
+PhaseOneDecompressorFuzzer
+cfi lines:  0  iCalls:  187
+SonyArw1DecompressorFuzzer
+cfi lines:  0  iCalls:  186
+FujiDecompressorFuzzer
+cfi lines:  0  iCalls:  188
+NikonDecompressorFuzzer
+cfi lines:  0  iCalls:  186
+TiffDecoderFuzzer-PefDecoder
+cfi lines:  0  iCalls:  740
+PanasonicV6DecompressorFuzzer
+cfi lines:  0  iCalls:  185
+DummyLJpegDecoderFuzzer
+cfi lines:  0  iCalls:  186
+VC5DecompressorFuzzer
+cfi lines:  0  iCalls:  257
+
+
+glib
+
+
+dng_sdk
+dng_camera_profile_fuzzer
+cfi lines:  2  iCalls:  753
+dng_fixed_validate_fuzzer
+cfi lines:  47  iCalls:  1784
+dng_stage_fuzzer
+cfi lines:  47  iCalls:  1766
+dng_parser_fuzzer
+cfi lines:  38  iCalls:  1451
+dng_validate_fuzzer
+cfi lines:  47  iCalls:  1784
+
+
+vorbis
+decode_fuzzer
+cfi lines:  30  iCalls:  21
+
+
+freeradius
+
+
+trafficserver
+FuzzEsi
+cfi lines:  2  iCalls:  989
+
+
+apache-httpd
+
+
+lzma
+xzdec_fuzzer
+cfi lines:  20  iCalls:  225
+lzma2dec_fuzzer
+cfi lines:  4  iCalls:  10
+7z_fuzzer
+cfi lines:  14  iCalls:  104
+ppmdenc_fuzzer
+cfi lines:  9  iCalls:  214
+lzma2enc_fuzzer
+cfi lines:  8  iCalls:  222
+filters_fuzzer
+cfi lines:  9  iCalls:  192
+lzmaenc_fuzzer
+cfi lines:  6  iCalls:  214
+xzenc_fuzzer
+cfi lines:  26  iCalls:  289
+lzmadec_fuzzer
+cfi lines:  4  iCalls:  10
+
+
+xmlsec
+
+
+lldb-eval
+
+
+zydis
+
+
+libwebsockets
+
+
+cmake
+
+
+pidgin
+
+
+h3
+
+
+skia
+
+
+libsodium
+
+
+proxygen
+ProxygenHTTP1xFuzzer
+cfi lines:  36  iCalls:  2204
+
+
+jansson
+
+
+speex
+speex_decode_fuzzer_fixed
+cfi lines:  33  iCalls:  28
+speex_decode_fuzzer_float
+cfi lines:  33  iCalls:  28
+
+
+xz
+
+
+libmodbus
+
+
+libigl
+igl_fuzzer
+cfi lines:  1  iCalls:  973
+
+
+geos
+
+
+skcms
+iccprofile_atf
+cfi lines:  0  iCalls:  186
+iccprofile_transform
+cfi lines:  3  iCalls:  187
+iccprofile_info
+cfi lines:  0  iCalls:  186
+
+
+num-bigint
+
+
+nghttp2
+
+
+libpng-proto
+png_transforms_fuzzer
+cfi lines:  19  iCalls:  943
+png_proto_fuzzer_example_custom_mutator
+cfi lines:  10  iCalls:  2239
+png_custom_mutator_fuzzer_example
+cfi lines:  9  iCalls:  948
+png_proto_fuzzer_example
+cfi lines:  10  iCalls:  2220
+
+
+cpp-httplib
+server_fuzzer
+cfi lines:  2  iCalls:  1108
+
+
+unit
+
+
+qpdf
+tiffpredictor_fuzzer
+cfi lines:  1  iCalls:  975
+runlength_fuzzer
+cfi lines:  1  iCalls:  973
+flate_fuzzer
+cfi lines:  6  iCalls:  998
+ascii85_fuzzer
+cfi lines:  1  iCalls:  967
+dct_fuzzer
+cfi lines:  551  iCalls:  2285
+hex_fuzzer
+cfi lines:  1  iCalls:  967
+qpdf_fuzzer
+cfi lines:  576  iCalls:  4580
+pngpredictor_fuzzer
+cfi lines:  1  iCalls:  980
+lzw_fuzzer
+cfi lines:  1  iCalls:  969
+
+
+wget2
+
+
+coturn
+FuzzStunClient
+cfi lines:  0  iCalls:  3
+FuzzStun
+cfi lines:  0  iCalls:  3
+
+
+graphicsfuzz-spirv
+spirv-opt
+cfi lines:  96  iCalls:  4441
+spirv-val
+cfi lines:  50  iCalls:  1445
+glslangValidator
+cfi lines:  60  iCalls:  10687
+spirv-as
+cfi lines:  7  iCalls:  1080
+spirv-cross
+cfi lines:  1  iCalls:  1275
+spirv-dis
+cfi lines:  10  iCalls:  1085
+
+
+piex
+fuzzer-piex
+cfi lines:  1  iCalls:  364
+fuzzer-tiff_parser
+cfi lines:  0  iCalls:  294
+
+
+radare2
+
+
+fmt
+chrono-duration-fuzzer
+cfi lines:  186  iCalls:  5063
+named-arg-fuzzer
+cfi lines:  0  iCalls:  928
+float-fuzzer
+cfi lines:  0  iCalls:  929
+chrono-timepoint-fuzzer
+cfi lines:  1  iCalls:  1203
+two-args-fuzzer
+cfi lines:  0  iCalls:  928
+one-arg-fuzzer
+cfi lines:  1  iCalls:  1198
+
+
+libidn2
+
+
+jsoncons
+fuzz_cbor_parser_max
+cfi lines:  0  iCalls:  1105
+fuzz_cbor
+cfi lines:  1  iCalls:  1166
+fuzz_bson_encoder
+cfi lines:  1  iCalls:  994
+fuzz_msgpack_parser_max
+cfi lines:  0  iCalls:  1071
+fuzz_ubjson
+cfi lines:  1  iCalls:  1064
+fuzz_msgpack
+cfi lines:  1  iCalls:  1132
+fuzz_ubjson_encoder
+cfi lines:  0  iCalls:  1003
+fuzz_csv
+cfi lines:  0  iCalls:  1138
+fuzz_json_parser_max
+cfi lines:  0  iCalls:  1052
+fuzz_bson_parser_max
+cfi lines:  0  iCalls:  994
+fuzz_bson
+cfi lines:  1  iCalls:  1054
+fuzz_msgpack_encoder
+cfi lines:  0  iCalls:  1072
+fuzz_json_encoder
+cfi lines:  0  iCalls:  1053
+fuzz_csv_encoder
+cfi lines:  0  iCalls:  1139
+fuzz_ubjson_parser_max
+cfi lines:  0  iCalls:  1004
+fuzz_json_cursor
+cfi lines:  1  iCalls:  1091
+fuzz_parse
+cfi lines:  1  iCalls:  337
+fuzz_cbor_encoder
+cfi lines:  0  iCalls:  1139
+
+
+wabt
+
+
+libexif
+exif_loader_fuzzer
+cfi lines:  46  iCalls:  23
+exif_from_data_fuzzer
+cfi lines:  40  iCalls:  21
+
+
+solidity
+
+
+xerces-c
+parse_target
+cfi lines:  132  iCalls:  8182
+parse_target_proto
+cfi lines:  139  iCalls:  10193
+
+
+curl
+
+
+openweave
+FuzzPASEResponderStep1
+cfi lines:  243  iCalls:  1372
+FuzzPASEInitiatorStep1
+cfi lines:  243  iCalls:  1372
+FuzzPASEInitiatorStep2
+cfi lines:  243  iCalls:  1372
+FuzzPASEKeyConfirm
+cfi lines:  243  iCalls:  1372
+FuzzCertificateConversion
+cfi lines:  132  iCalls:  1003
+FuzzPASEResponderStep2
+cfi lines:  243  iCalls:  1372
+
+
+openjpeg
+opj_decompress_fuzzer_J2K
+cfi lines:  71  iCalls:  37
+opj_decompress_fuzzer_JP2
+cfi lines:  71  iCalls:  37
+
+
+cryptofuzz
+
+
+poppler
+
+
+libxls
+
+
+http-parser
+fuzz_url
+cfi lines:  0  iCalls:  3
+fuzz_parser
+cfi lines:  0  iCalls:  3
+
+
+cfengine
+
+
+cups
+
+
+uwebsockets
+QueryParser
+cfi lines:  0  iCalls:  186
+WebSocket
+cfi lines:  0  iCalls:  189
+MultipartParser
+cfi lines:  0  iCalls:  186
+Http
+cfi lines:  15  iCalls:  1000
+Extensions
+cfi lines:  0  iCalls:  186
+HttpWithProxy
+cfi lines:  15  iCalls:  1000
+EpollEchoServer
+cfi lines:  66  iCalls:  1156
+TopicTree
+cfi lines:  1  iCalls:  968
+PerMessageDeflate
+cfi lines:  0  iCalls:  191
+EpollHelloWorld
+cfi lines:  74  iCalls:  1187
+EpollEchoServerPubSub
+cfi lines:  52  iCalls:  1144
+
+
+php
+
+
+libarchive
+libarchive_fuzzer
+cfi lines:  261  iCalls:  3401
+
+
+tpm2-tss
+Tss2_Sys_ACT_SetTimeout_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Rewrap_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_Increment_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyAuthorizeNV_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_FieldUpgradeData_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PP_Commands_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Policy_AC_SendSelect_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_GetCommandAuditDigest_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_MakeCredential_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_GetSessionAuditDigest_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_EncryptDecrypt2_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_VerifySignature_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_GetTestResult_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_EventSequenceComplete_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyLocality_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_RSA_Decrypt_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Startup_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_AC_Send_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyTicket_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PCR_Event_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Duplicate_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PCR_Allocate_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ECDH_KeyGen_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyRestart_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_RSA_Encrypt_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_GetTime_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_ChangeAuth_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_TestParms_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_DefineSpace_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicySecret_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_HierarchyControl_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyNameHash_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ClearControl_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ActivateCredential_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_HierarchyChangeAuth_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyNvWritten_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_HashSequenceStart_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_CreatePrimary_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_HMAC_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_ChangeAuth_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ECDH_ZGen_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ReadPublic_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyGetDigest_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PCR_Event_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyCounterTimer_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_GlobalWriteLock_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_GetSessionAuditDigest_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Clear_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyGetDigest_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ContextSave_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PCR_Read_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_DictionaryAttackLockReset_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_StartAuthSession_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Duplicate_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_AC_GetCapability_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_GetCommandAuditDigest_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Commit_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_FlushContext_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_StirRandom_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_AC_Send_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_EventSequenceComplete_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_SelfTest_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Vendor_TCG_Test_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Load_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PCR_SetAuthPolicy_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyPCR_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Certify_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_CreateLoaded_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_RSA_Encrypt_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ClockRateAdjust_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ECDH_KeyGen_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_MakeCredential_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ECDH_ZGen_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ACT_SetTimeout_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyCounterTimer_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyPassword_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyAuthorizeNV_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_EvictControl_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_Certify_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PCR_Read_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_FieldUpgradeData_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_SetPrimaryPolicy_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_Read_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Sign_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_DictionaryAttackParameters_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyOR_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyLocality_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ClockSet_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Rewrap_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Shutdown_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_SetCommandCodeAuditStatus_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_CreateLoaded_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_AC_GetCapability_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyTemplate_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_GlobalWriteLock_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Policy_AC_SendSelect_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_GetTime_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyAuthValue_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Import_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_StartAuthSession_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Commit_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_EvictControl_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Import_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ZGen_2Phase_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_FieldUpgradeStart_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_EC_Ephemeral_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyCommandCode_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ContextLoad_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_GetRandom_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_EncryptDecrypt_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_DictionaryAttackParameters_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyAuthValue_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Shutdown_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyPhysicalPresence_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ReadPublic_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_EC_Ephemeral_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyTicket_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ClearControl_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_StirRandom_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Unseal_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_ReadPublic_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyPassword_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ZGen_2Phase_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ObjectChangeAuth_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicySigned_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyNameHash_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PCR_SetAuthPolicy_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Hash_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyDuplicationSelect_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_SetBits_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Vendor_TCG_Test_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_SetAlgorithmSet_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicySecret_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Startup_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PP_Commands_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PCR_Reset_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyRestart_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_ReadLock_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Load_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_CertifyX509_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PCR_Allocate_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyAuthorize_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PCR_SetAuthValue_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_SetPrimaryPolicy_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyNV_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_GetCapability_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PCR_Reset_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_SetAlgorithmSet_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_EncryptDecrypt2_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Unseal_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_UndefineSpaceSpecial_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_Increment_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_CertifyCreation_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_DictionaryAttackLockReset_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_Read_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_SetBits_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyTemplate_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_RSA_Decrypt_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_EncryptDecrypt_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ChangePPS_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyAuthorize_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_SequenceUpdate_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_SequenceComplete_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Create_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_CertifyX509_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyCommandCode_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_MAC_Start_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Quote_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_MAC_Start_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyNvWritten_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_FirmwareRead_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Certify_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PCR_SetAuthValue_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_IncrementalSelfTest_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_TestParms_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_UndefineSpaceSpecial_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Hash_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PCR_Extend_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_UndefineSpace_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ClockSet_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_SequenceUpdate_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyDuplicationSelect_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_HMAC_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Create_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_MAC_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyPCR_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyOR_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Quote_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_VerifySignature_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyCpHash_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_HashSequenceStart_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_Certify_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ECC_Parameters_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_HMAC_Start_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_WriteLock_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ReadClock_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_HierarchyControl_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicySigned_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PCR_Extend_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_LoadExternal_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_Write_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ChangePPS_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_ReadPublic_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_HMAC_Start_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ContextLoad_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ECC_Parameters_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_ReadLock_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_SetCommandCodeAuditStatus_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyNV_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_SequenceComplete_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ClockRateAdjust_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ChangeEPS_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_FirmwareRead_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_HierarchyChangeAuth_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_CertifyCreation_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ActivateCredential_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_CreatePrimary_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyPhysicalPresence_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_LoadExternal_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_MAC_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ObjectChangeAuth_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_FieldUpgradeStart_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_Extend_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Sign_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_FlushContext_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_Write_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_Clear_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_WriteLock_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_PolicyCpHash_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_UndefineSpace_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_DefineSpace_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_SelfTest_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ChangeEPS_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_NV_Extend_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_ContextSave_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_IncrementalSelfTest_Prepare
+cfi lines:  1  iCalls:  4
+Tss2_Sys_GetRandom_Complete
+cfi lines:  1  iCalls:  4
+Tss2_Sys_GetCapability_Prepare
+cfi lines:  1  iCalls:  4
+
+
+neomutt
+address-fuzz
+cfi lines:  60  iCalls:  117
+
+
+leveldb
+fuzz_db
+cfi lines:  14  iCalls:  1372
+
+
+bitcoin-core
+cryptofuzz-bitcoin-cryptography-w15-p4
+cfi lines:  20  iCalls:  5299
+cryptofuzz-bitcoin-cryptography-w20-p8
+cfi lines:  20  iCalls:  5299
+cryptofuzz-bitcoin-cryptography-w2-p2
+cfi lines:  20  iCalls:  5299
+
+
+cras
+
+
+rabbitmq-c
+fuzz_url
+cfi lines:  0  iCalls:  3
+fuzz_server
+cfi lines:  6  iCalls:  11
+fuzz_table
+cfi lines:  0  iCalls:  3
+
+
+htslib
+hts_open_fuzzer
+cfi lines:  249  iCalls:  413
+
+
+libvnc
+fuzz_server
+cfi lines:  34  iCalls:  136
+
+
+c-ares
+ares_parse_reply_fuzzer
+cfi lines:  1  iCalls:  122
+ares_create_query_fuzzer
+cfi lines:  1  iCalls:  5
+
+
+proj4
+proj_crs_to_crs_fuzzer
+cfi lines:  0  iCalls:  11162
+
+
+nginx
+
+
+spotify-json
+fuzz_decode
+cfi lines:  0  iCalls:  202
+
+
+json
+parse_msgpack_fuzzer
+cfi lines:  0  iCalls:  233
+parse_bjdata_fuzzer
+cfi lines:  0  iCalls:  320
+parse_cbor_fuzzer
+cfi lines:  0  iCalls:  247
+parse_bson_fuzzer
+cfi lines:  0  iCalls:  229
+parse_ubjson_fuzzer
+cfi lines:  0  iCalls:  320
+
+
+rnp
+
+
+usrsctp
+
+
+qemu
+qemu-fuzz-i386-target-generic-fuzz-ac97
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-virtio-9p
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-xhci
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-rtl8139
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-e1000e
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-sb16
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-ahci-atapi
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-ide-hd
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-virtio-mouse
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-megaraid
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-pcnet
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-sdhci-v3
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-intel-hda
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-virtio-net-pci-slirp
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-virtio-blk
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-am53c974
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-es1370
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-cirrus-vga
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-pc-q35
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-virtio-gpu
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-ehci
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-parallel
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-ahci-hd
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-cs4231a
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-virtio-vga
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-virtio-scsi
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-ide-atapi
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-virtio-balloon
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-e1000
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-igb
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-i82550
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-virtio-serial
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-pc-i440fx
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-ohci
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-floppy
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-bochs-display
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-ne2k_pci
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-virtio-9p-synth
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-vmxnet3
+cfi lines:  10744  iCalls:  2989
+qemu-fuzz-i386-target-generic-fuzz-virtio-rng
+cfi lines:  10744  iCalls:  2989
+
+
+llvm_libcxxabi
+cxa_demangle_fuzzer
+cfi lines:  0  iCalls:  214
+
+
+opencensus-cpp
+
+
+tmux
+input-fuzzer
+cfi lines:  500  iCalls:  781
+
+
+oniguruma
+
+
+libcbor
+cbor_load_fuzzer
+cfi lines:  27  iCalls:  280
+
+
+cifuzz-example
+do_stuff_fuzzer
+cfi lines:  0  iCalls:  186
+
+
+double-conversion
+string_to_double_fuzzer
+cfi lines:  2  iCalls:  730
+
+
+boringssl
+ssl_ctx_api
+cfi lines:  343  iCalls:  518
+server
+cfi lines:  531  iCalls:  757
+bn_div
+cfi lines:  4  iCalls:  194
+arm_cpuinfo
+cfi lines:  0  iCalls:  3
+bn_mod_exp
+cfi lines:  6  iCalls:  197
+
+
+leptonica
+
+
+spice-usbredir
+usbredirfilterfuzz
+cfi lines:  0  iCalls:  186
+usbredirparserfuzz
+cfi lines:  40  iCalls:  203
+
+
+open62541
+fuzz_binary_message
+cfi lines:  144  iCalls:  734
+
+
+hermes
+fuzzer-jsi-entry
+cfi lines:  1111  iCalls:  5004
+
+
+myanmar-tools
+
+
+gdk-pixbuf
+
+
+e2fsprogs
+
+
+libraw
+libraw_raf_fuzzer
+cfi lines:  70  iCalls:  1100
+libraw_nef_fuzzer
+cfi lines:  70  iCalls:  1100
+libraw_cr2_fuzzer
+cfi lines:  70  iCalls:  1100
+libraw_fuzzer
+cfi lines:  70  iCalls:  1100
+
+
+tink
+
+
+nodejs
+
+
+hiredis
+
+
+ostree
+
+
+firestore
+firestore_leveldb_fuzzer
+cfi lines:  3  iCalls:  955
+firestore_resourcepath_fuzzer
+cfi lines:  1  iCalls:  936
+firestore_fieldpath_fuzzer
+cfi lines:  1  iCalls:  936
+firestore_serializer_fuzzer
+cfi lines:  13  iCalls:  980
+
+
+capstone
+fuzz_disasmnext
+cfi lines:  593  iCalls:  218
+fuzz_disasmv4
+cfi lines:  446  iCalls:  208
+
+
+bluez
+
+
+llvm_libcxx
+stable_sort
+cfi lines:  0  iCalls:  186
+stable_partition
+cfi lines:  0  iCalls:  186
+partial_sort
+cfi lines:  0  iCalls:  186
+sort
+cfi lines:  0  iCalls:  186
+unique
+cfi lines:  0  iCalls:  186
+regex
+cfi lines:  0  iCalls:  815
+partial_sort_copy
+cfi lines:  0  iCalls:  186
+make_heap
+cfi lines:  0  iCalls:  186
+pop_heap
+cfi lines:  0  iCalls:  186
+push_heap
+cfi lines:  0  iCalls:  186
+search
+cfi lines:  0  iCalls:  3
+nth_element
+cfi lines:  0  iCalls:  186
+partition_copy
+cfi lines:  0  iCalls:  186
+random
+cfi lines:  0  iCalls:  186
+partition
+cfi lines:  0  iCalls:  186
+unique_copy
+cfi lines:  0  iCalls:  186
+
+
+pugixml
+fuzz_xpath
+cfi lines:  3  iCalls:  979
+fuzz_parse
+cfi lines:  18  iCalls:  952
+
+
+krb5
+
+
+pupnp
+FuzzIxml
+cfi lines:  1  iCalls:  4
+
+
+libgit2
+
+
+arrow
+arrow-ipc-tensor-stream-fuzz
+cfi lines:  9  iCalls:  1783
+arrow-ipc-stream-fuzz
+cfi lines:  23  iCalls:  10195
+arrow-ipc-file-fuzz
+cfi lines:  26  iCalls:  10918
+arrow-ipc-generate-fuzz-corpus
+cfi lines:  17  iCalls:  10668
+arrow-ipc-generate-tensor-fuzz-corpus
+cfi lines:  9  iCalls:  651
+parquet-arrow-fuzz
+cfi lines:  396  iCalls:  22819
+parquet-arrow-generate-fuzz-corpus
+cfi lines:  375  iCalls:  21754
+
+
+assimp
+assimp_fuzzer
+cfi lines:  593  iCalls:  4313
+
+
+varnish
+esi_parse_fuzzer
+cfi lines:  4  iCalls:  11
+
+
+libjpeg-turbo
+
+
+libxslt
+xpath
+cfi lines:  270  iCalls:  1867
+
+
+nanopb
+fuzztest_io_errors
+cfi lines:  6  iCalls:  25
+fuzztest_proto3_pointer
+cfi lines:  4  iCalls:  34
+fuzztest_proto2_static
+cfi lines:  7  iCalls:  36
+fuzztest_proto2_pointer
+cfi lines:  4  iCalls:  34
+fuzztest_proto3_static
+cfi lines:  4  iCalls:  34
+
+
+strongswan
+
+
+xs
+
+
+libyaml
+
+
+libtsm
+libtsm_fuzzer
+cfi lines:  3  iCalls:  7
+
+
+dropbear
+fuzzer-postauth_nomaths
+cfi lines:  101  iCalls:  339
+fuzzer-preauth
+cfi lines:  101  iCalls:  339
+fuzzer-kexcurve25519
+cfi lines:  57  iCalls:  236
+fuzzer-kexdh
+cfi lines:  57  iCalls:  236
+fuzzer-pubkey
+cfi lines:  44  iCalls:  228
+fuzzer-client_nomaths
+cfi lines:  106  iCalls:  340
+fuzzer-kexecdh
+cfi lines:  61  iCalls:  247
+fuzzer-verify
+cfi lines:  60  iCalls:  259
+fuzzer-preauth_nomaths
+cfi lines:  101  iCalls:  339
+fuzzer-client
+cfi lines:  106  iCalls:  340
+
+
+sql-parser
+fuzz_sql_parse
+cfi lines:  0  iCalls:  1082
+
+
+lwan
+
+
+mdbtools
+
+
+gnutls
+
+
+fluent-bit
+flb-it-fuzz-flb_json_fuzzer_OSSFUZZ
+cfi lines:  1  iCalls:  32
+flb-it-fuzz-parser_fuzzer_OSSFUZZ
+cfi lines:  956  iCalls:  3199
+flb-it-fuzz-record_ac_fuzzer_OSSFUZZ
+cfi lines:  4  iCalls:  3
+flb-it-fuzz-msgpack_to_gelf_fuzzer_OSSFUZZ
+cfi lines:  0  iCalls:  3
+flb-it-fuzz-filter_stdout_fuzzer_OSSFUZZ
+cfi lines:  1060  iCalls:  3218
+flb-it-fuzz-config_random_fuzzer_OSSFUZZ
+cfi lines:  956  iCalls:  3199
+flb-it-fuzz-msgpack_parse_fuzzer_OSSFUZZ
+cfi lines:  0  iCalls:  3
+flb-it-fuzz-parse_ltsv_fuzzer_OSSFUZZ
+cfi lines:  956  iCalls:  3199
+flb-it-fuzz-engine_fuzzer_OSSFUZZ
+cfi lines:  1061  iCalls:  3219
+flb-it-fuzz-http_fuzzer_OSSFUZZ
+cfi lines:  956  iCalls:  3199
+flb-it-fuzz-config_map_fuzzer_OSSFUZZ
+cfi lines:  956  iCalls:  3199
+flb-it-fuzz-config_fuzzer_OSSFUZZ
+cfi lines:  965  iCalls:  3206
+flb-it-fuzz-utils_fuzzer_OSSFUZZ
+cfi lines:  58  iCalls:  306
+flb-it-fuzz-strp_fuzzer_OSSFUZZ
+cfi lines:  0  iCalls:  3
+flb-it-fuzz-ctrace_fuzzer_OSSFUZZ
+cfi lines:  44  iCalls:  10
+flb-it-fuzz-aws_credentials_fuzzer_OSSFUZZ
+cfi lines:  956  iCalls:  3199
+flb-it-fuzz-pack_json_state_fuzzer_OSSFUZZ
+cfi lines:  1  iCalls:  3
+flb-it-fuzz-parse_logfmt_fuzzer_OSSFUZZ
+cfi lines:  956  iCalls:  3199
+flb-it-fuzz-parse_json_fuzzer_OSSFUZZ
+cfi lines:  956  iCalls:  3199
+flb-it-fuzz-aws_util_fuzzer_OSSFUZZ
+cfi lines:  956  iCalls:  3199
+flb-it-fuzz-signv4_fuzzer_OSSFUZZ
+cfi lines:  956  iCalls:  3199
+flb-it-fuzz-multiline_fuzzer_OSSFUZZ
+cfi lines:  957  iCalls:  3199
+flb-it-fuzz-base64_fuzzer_OSSFUZZ
+cfi lines:  0  iCalls:  3
+
+
+libevent
+utils_fuzzer
+cfi lines:  0  iCalls:  186
+parse_query_fuzzer
+cfi lines:  0  iCalls:  186
+
+
+tarantool
+
+
+kamailio
+
+
+libvpx
+
+
+astc-encoder
+fuzz_astc_physical_to_symbolic
+cfi lines:  0  iCalls:  186
+
+
+libssh
+
+
+libusb
+libusb_fuzzer
+cfi lines:  2  iCalls:  188
+
+
+mercurial
+
+
+stb
+stbi_read_fuzzer
+cfi lines:  10  iCalls:  9
+stb_png_read_fuzzer
+cfi lines:  0  iCalls:  3
+
+
+mpg123
+
+
+re2
+re2_fuzzer
+cfi lines:  19  iCalls:  1013
+
+
+croaring
+
+
+poco
+json_parser_fuzzer
+cfi lines:  11  iCalls:  1159
+
+
+qt
+qtsvg_svg_qsvgrenderer_render
+cfi lines:  0  iCalls:  9384
+qtbase_corelib_text_qregularexpression_optimize
+cfi lines:  0  iCalls:  4309
+qtbase_network_ssl_qsslcertificate_qsslcertificate_pem
+cfi lines:  0  iCalls:  5876
+qtbase_gui_text_qtextdocument_sethtml
+cfi lines:  0  iCalls:  9391
+qtbase_gui_text_qtextdocument_setmarkdown
+cfi lines:  0  iCalls:  9474
+qtbase_corelib_time_qdatetime_fromstring
+cfi lines:  0  iCalls:  4336
+qtbase_corelib_serialization_qcborvalue_fromcbor
+cfi lines:  0  iCalls:  4309
+qtbase_gui_image_qimage_loadfromdata
+cfi lines:  0  iCalls:  9384
+qtbase_corelib_serialization_qjsondocument_fromjson
+cfi lines:  0  iCalls:  4309
+qtbase_gui_text_qtextlayout_beginlayout
+cfi lines:  0  iCalls:  9384
+qtbase_corelib_tools_qcryptographichash_result
+cfi lines:  0  iCalls:  4311
+qtbase_corelib_serialization_qtextstream_extractionoperator-float
+cfi lines:  0  iCalls:  4316
+qtbase_corelib_serialization_qcborstreamreader_next
+cfi lines:  0  iCalls:  4309
+qtbase_gui_painting_qcolorspace_fromiccprofile
+cfi lines:  0  iCalls:  9384
+qtbase_corelib_serialization_qxmlstream_qxmlstreamreader_readnext
+cfi lines:  0  iCalls:  4313
+
+
+dbus-broker
+
+
+brpc
+Fuzz_json
+cfi lines:  239  iCalls:  173
+Fuzz_http
+cfi lines:  485  iCalls:  219
+
+
+ntp
+fuzz_ntpd_receive
+cfi lines:  230  iCalls:  35
+
+
+protobuf-c
+
+
+unrar
+
+
+grpc-httpjson-transcoding
+
+
+readstat
+
+
+hdf5
+
+
+libprotobuf-mutator
+
+
+libplist
+
+
+duckdb
+
+
+wavpack
+fuzzer
+cfi lines:  0  iCalls:  1055
+
+
+quickjs
+
+
+inchi
+
+
+spdk
+
+
+dart
+dart_libfuzzer
+cfi lines:  0  iCalls:  20179
+
+
+frr
+
+
+freeimage
+
+
+libteken
+
+
+eigen
+basicstuff_fuzzer
+cfi lines:  0  iCalls:  186
+solver_fuzzer
+cfi lines:  0  iCalls:  186
+
+
+botan
+ecc_p384
+cfi lines:  4  iCalls:  1848
+mp_comba_sqr
+cfi lines:  0  iCalls:  962
+ocsp
+cfi lines:  9  iCalls:  2751
+cert
+cfi lines:  8  iCalls:  2730
+invert
+cfi lines:  0  iCalls:  963
+tls_client
+cfi lines:  177  iCalls:  4432
+bn_cmp
+cfi lines:  0  iCalls:  962
+mp_redc
+cfi lines:  0  iCalls:  964
+crl
+cfi lines:  7  iCalls:  1092
+os2ecp
+cfi lines:  2  iCalls:  1225
+x509_dn
+cfi lines:  0  iCalls:  990
+redc_p521
+cfi lines:  2  iCalls:  964
+divide
+cfi lines:  0  iCalls:  963
+redc_p192
+cfi lines:  2  iCalls:  964
+redc_p384
+cfi lines:  2  iCalls:  964
+ecc_p521
+cfi lines:  4  iCalls:  1848
+gcd
+cfi lines:  0  iCalls:  963
+asn1
+cfi lines:  0  iCalls:  993
+bn_sqr
+cfi lines:  0  iCalls:  963
+pkcs8
+cfi lines:  8  iCalls:  3744
+ecc_bp256
+cfi lines:  4  iCalls:  1848
+mem_pool
+cfi lines:  0  iCalls:  963
+uri
+cfi lines:  0  iCalls:  1014
+redc_p224
+cfi lines:  2  iCalls:  964
+redc_p256
+cfi lines:  2  iCalls:  964
+tls_client_hello
+cfi lines:  33  iCalls:  2768
+tls_server
+cfi lines:  173  iCalls:  5200
+mp_comba_mul
+cfi lines:  0  iCalls:  962
+tls_13_handshake_layer
+cfi lines:  68  iCalls:  2911
+pow_mod
+cfi lines:  0  iCalls:  980
+barrett
+cfi lines:  0  iCalls:  963
+ressol
+cfi lines:  2  iCalls:  1558
+oaep
+cfi lines:  0  iCalls:  962
+x509_path
+cfi lines:  10  iCalls:  2885
+pkcs1
+cfi lines:  0  iCalls:  963
+ecc_p256
+cfi lines:  4  iCalls:  1848
+mode_padding
+cfi lines:  0  iCalls:  962
+
+
+tcmalloc
+
+
+vlc
+vlc-demux-dec-libfuzzer
+cfi lines:  967  iCalls:  4722
+vlc-demux-libfuzzer
+cfi lines:  796  iCalls:  3967
+
+
+perfetto
+unwinding_fuzzer
+cfi lines:  221  iCalls:  3014
+shared_ring_buffer_fuzzer
+cfi lines:  1  iCalls:  1101
+protozero_decoder_fuzzer
+cfi lines:  1  iCalls:  1101
+shared_ring_buffer_write_fuzzer
+cfi lines:  1  iCalls:  1101
+cpu_reader_fuzzer
+cfi lines:  3  iCalls:  1590
+end_to_end_shared_memory_fuzzer
+cfi lines:  105  iCalls:  6090
+buffered_frame_deserializer_fuzzer
+cfi lines:  1  iCalls:  1116
+protozero_bytecode_parser_fuzzer
+cfi lines:  1  iCalls:  1101
+packet_stream_validator_fuzzer
+cfi lines:  3  iCalls:  2426
+protozero_message_filter_fuzzer
+cfi lines:  1  iCalls:  1101
+producer_socket_fuzzer
+cfi lines:  105  iCalls:  6042
+trace_processor_fuzzer
+cfi lines:  5  iCalls:  2359
+
+
+postfix
+
+
+spirv-tools
+spvtools_binary_parser_fuzzer
+cfi lines:  2  iCalls:  976
+spvtools_opt_legalization_fuzzer
+cfi lines:  68  iCalls:  3508
+spvtools_opt_size_fuzzer
+cfi lines:  67  iCalls:  3541
+spvtools_val_fuzzer
+cfi lines:  49  iCalls:  1503
+spvtools_dis_fuzzer
+cfi lines:  7  iCalls:  1009
+spvtools_opt_performance_fuzzer
+cfi lines:  67  iCalls:  3566
+spvtools_as_fuzzer
+cfi lines:  4  iCalls:  1004
+
+
+netcdf
+fuzz_open
+cfi lines:  93  iCalls:  57
+
+
+tinyxml2
+xmltest
+cfi lines:  0  iCalls:  259
+
+
+cpython3
+
+
+libspng
+
+
+libheif
+box-fuzzer
+cfi lines:  3105  iCalls:  2707
+file-fuzzer
+cfi lines:  3118  iCalls:  3232
+color-conversion-fuzzer
+cfi lines:  3102  iCalls:  2774
+encoder-fuzzer
+cfi lines:  3124  iCalls:  3090
+
+
+upb
+
+
+grok
+grk_decompress_fuzzer
+cfi lines:  498  iCalls:  1659
+
+
+libcacard
+
+
+util-linux
+
+
+systemd
+fuzz-ndisc-rs
+cfi lines:  0  iCalls:  3
+fuzz-dhcp-client
+cfi lines:  1  iCalls:  4
+fuzz-network-parser
+cfi lines:  47  iCalls:  11
+fuzz-bus-message
+cfi lines:  0  iCalls:  3
+fuzz-udev-rules
+cfi lines:  0  iCalls:  3
+fuzz-link-parser
+cfi lines:  0  iCalls:  3
+fuzz-json
+cfi lines:  0  iCalls:  3
+fuzz-journald-syslog
+cfi lines:  1  iCalls:  4
+fuzz-dhcp6-client
+cfi lines:  0  iCalls:  3
+fuzz-time-util
+cfi lines:  0  iCalls:  3
+fuzz-dns-packet
+cfi lines:  0  iCalls:  3
+fuzz-efi-string
+cfi lines:  0  iCalls:  3
+fuzz-journald-native-fd
+cfi lines:  0  iCalls:  3
+fuzz-fido-id-desc
+cfi lines:  0  iCalls:  3
+fuzz-xdg-desktop
+cfi lines:  0  iCalls:  3
+fuzz-bcd
+cfi lines:  0  iCalls:  3
+fuzz-bootspec
+cfi lines:  0  iCalls:  3
+fuzz-dhcp-server
+cfi lines:  1  iCalls:  4
+fuzz-journald-stream
+cfi lines:  0  iCalls:  3
+fuzz-unit-file
+cfi lines:  0  iCalls:  3
+fuzz-journald-native
+cfi lines:  1  iCalls:  4
+fuzz-udev-rule-parse-value
+cfi lines:  0  iCalls:  3
+fuzz-dhcp-server-relay
+cfi lines:  0  iCalls:  3
+fuzz-resource-record
+cfi lines:  0  iCalls:  3
+fuzz-calendarspec
+cfi lines:  0  iCalls:  3
+fuzz-env-file
+cfi lines:  0  iCalls:  3
+fuzz-bus-match
+cfi lines:  0  iCalls:  3
+fuzz-varlink
+cfi lines:  0  iCalls:  3
+fuzz-bus-label
+cfi lines:  0  iCalls:  3
+fuzz-journal-remote
+cfi lines:  0  iCalls:  3
+fuzz-journald-audit
+cfi lines:  3  iCalls:  4
+fuzz-nspawn-oci
+cfi lines:  0  iCalls:  3
+fuzz-systemctl-parse-argv
+cfi lines:  13  iCalls:  4
+fuzz-nspawn-settings
+cfi lines:  0  iCalls:  3
+fuzz-netdev-parser
+cfi lines:  82  iCalls:  15
+fuzz-lldp-rx
+cfi lines:  0  iCalls:  3
+fuzz-journald-kmsg
+cfi lines:  0  iCalls:  3
+fuzz-efi-printf
+cfi lines:  0  iCalls:  3
+fuzz-udev-database
+cfi lines:  0  iCalls:  3
+fuzz-hostname-setup
+cfi lines:  0  iCalls:  3
+fuzz-catalog
+cfi lines:  0  iCalls:  3
+fuzz-etc-hosts
+cfi lines:  0  iCalls:  3
+fuzz-compress
+cfi lines:  0  iCalls:  3
+
+
+net-snmp
+
+
+unicorn
+fuzz_emu_arm64_armbe
+cfi lines:  10060  iCalls:  1497
+fuzz_emu_x86_64
+cfi lines:  10060  iCalls:  1497
+fuzz_emu_arm_arm
+cfi lines:  10060  iCalls:  1497
+fuzz_emu_mips_32le
+cfi lines:  10060  iCalls:  1497
+fuzz_emu_x86_32
+cfi lines:  10060  iCalls:  1497
+fuzz_emu_x86_16
+cfi lines:  10060  iCalls:  1497
+fuzz_emu_s390x_be
+cfi lines:  10060  iCalls:  1497
+fuzz_emu_sparc_32be
+cfi lines:  10060  iCalls:  1497
+fuzz_emu_mips_32be
+cfi lines:  10060  iCalls:  1497
+fuzz_emu_arm64_arm
+cfi lines:  10060  iCalls:  1497
+fuzz_emu_m68k_be
+cfi lines:  10060  iCalls:  1497
+fuzz_emu_arm_armbe
+cfi lines:  10060  iCalls:  1497
+fuzz_emu_arm_thumb
+cfi lines:  10060  iCalls:  1497
+
+
+libzip
+zip_read_fuzzer
+cfi lines:  18  iCalls:  27
+
+
+alembic
+alembic_dump_info_fuzzer
+cfi lines:  1  iCalls:  1853
+
+
+tint
+tint_spv_reader_hlsl_writer_fuzzer
+cfi lines:  317  iCalls:  7749
+tint_spv_reader_wgsl_writer_fuzzer
+cfi lines:  317  iCalls:  7749
+tint_spirv_tools_hlsl_writer_fuzzer
+cfi lines:  540  iCalls:  8269
+tint_spv_reader_msl_writer_fuzzer
+cfi lines:  317  iCalls:  7768
+tint_spirv_tools_wgsl_writer_fuzzer
+cfi lines:  540  iCalls:  8269
+tint_spv_reader_spv_writer_fuzzer
+cfi lines:  317  iCalls:  7761
+tint_spirv_tools_msl_writer_fuzzer
+cfi lines:  540  iCalls:  8269
+tint_spirv_tools_spv_writer_fuzzer
+cfi lines:  540  iCalls:  8269
+
+
+pcapplusplus
+
+
+libressl
+
+
+mapserver
+mapfuzzer
+cfi lines:  0  iCalls:  25060
+shapefuzzer
+cfi lines:  0  iCalls:  25060
+
+
+w3m
+
+
+libiec61850
+
+
+mosh
+
+
+openssl
+
+
+libpg_query
+
+
+cgif
+
+
+spidermonkey-ufi
+
+
+sleuthkit
+
+
+meshoptimizer
+codecfuzzer
+cfi lines:  5  iCalls:  4
+
+
+fwupd
+
+
+ruby
+
+
+bearssl
+
+
+libical
+
+
+znc
+msg_parse_fuzzer
+cfi lines:  1  iCalls:  994
+
+
+binutils
+
+
+arduinojson
+msgpack_fuzzer
+cfi lines:  0  iCalls:  186
+json_fuzzer
+cfi lines:  0  iCalls:  186
+
+
+ffmpeg
+
+
+qubes-os
+input-proxy-receiver_fuzzer
+cfi lines:  0  iCalls:  3
+qrexec_remote_fuzzer
+cfi lines:  0  iCalls:  3
+qubesrpc_parse_fuzzer
+cfi lines:  0  iCalls:  3
+db-daemon_fuzzer
+cfi lines:  1  iCalls:  4
+
+
+guetzli
+guetzli_fuzzer
+cfi lines:  6  iCalls:  396
+
+
+selinux
+
+
+libsndfile
+
+
+libtpms
+fuzz
+cfi lines:  141  iCalls:  46
+
+
+harfbuzz
+hb-draw-fuzzer
+cfi lines:  138  iCalls:  318
+hb-shape-fuzzer
+cfi lines:  365  iCalls:  459
+hb-subset-fuzzer
+cfi lines:  204  iCalls:  378
+hb-set-fuzzer
+cfi lines:  6  iCalls:  4
+hb-repacker-fuzzer
+cfi lines:  13  iCalls:  14
+
+
+flatbuffers
+monster_fuzzer
+cfi lines:  19  iCalls:  1012
+parser_fuzzer
+cfi lines:  14  iCalls:  999
+verifier_fuzzer
+cfi lines:  0  iCalls:  186
+scalar_fuzzer
+cfi lines:  17  iCalls:  1078
+annotator_fuzzer
+cfi lines:  4  iCalls:  968
+flexverifier_fuzzer
+cfi lines:  0  iCalls:  186
+
+
+c-blosc
+decompress_fuzzer
+cfi lines:  75  iCalls:  36
+compress_fuzzer
+cfi lines:  75  iCalls:  36
+
+
+brotli
+decode_fuzzer
+cfi lines:  2  iCalls:  32
+
+
+sound-open-firmware
+
+
+elfutils
+
+
+libavif
+
+
+sudoers
+
+
+libtiff
+tiff_read_rgba_fuzzer
+cfi lines:  879  iCalls:  2641
+
+
+libhevc
+hevc_dec_fuzzer
+cfi lines:  146  iCalls:  329
+hevc_enc_fuzzer
+cfi lines:  183  iCalls:  794
+
+
+s2opc
+parse_tcp_uri_fuzzer
+cfi lines:  0  iCalls:  3
+decode_fuzzer
+cfi lines:  714  iCalls:  32
+sub_fuzzer
+cfi lines:  717  iCalls:  35
+server_request_fuzzer
+cfi lines:  41  iCalls:  24
+
+
+tremor
+decode_fuzzer
+cfi lines:  27  iCalls:  21
+
+
+simdjson
+fuzz_utf8
+cfi lines:  4  iCalls:  985
+fuzz_ndjson
+cfi lines:  0  iCalls:  234
+fuzz_minify
+cfi lines:  0  iCalls:  212
+fuzz_parser
+cfi lines:  0  iCalls:  211
+fuzz_print_json
+cfi lines:  0  iCalls:  962
+fuzz_ondemand
+cfi lines:  0  iCalls:  213
+fuzz_dump
+cfi lines:  0  iCalls:  962
+fuzz_dump_raw_tape
+cfi lines:  1  iCalls:  962
+fuzz_atpointer
+cfi lines:  0  iCalls:  211
+fuzz_minifyimpl
+cfi lines:  2  iCalls:  977
+fuzz_element
+cfi lines:  1  iCalls:  962
+fuzz_implementations
+cfi lines:  0  iCalls:  994
+fuzz_padded
+cfi lines:  0  iCalls:  939
+
+
+rapidjson
+fuzzer
+cfi lines:  0  iCalls:  186
+
+
+matio
+matio_fuzzer
+cfi lines:  2  iCalls:  195
+
+
+rdkit
+
+
+lcms
+cms_profile_fuzzer
+cfi lines:  189  iCalls:  194
+cms_transform_fuzzer
+cfi lines:  421  iCalls:  237
+cms_transform_extended_fuzzer
+cfi lines:  421  iCalls:  245
+cmsIT8_load_fuzzer
+cfi lines:  9  iCalls:  12
+cms_overwrite_transform_fuzzer
+cfi lines:  421  iCalls:  237
+cms_transform_all_fuzzer
+cfi lines:  421  iCalls:  237
+cms_universal_transform_fuzzer
+cfi lines:  421  iCalls:  237
+
+
+libreoffice
+
+
+lz4
+round_trip_frame_fuzzer
+cfi lines:  5  iCalls:  4
+round_trip_frame_uncompressed_fuzzer
+cfi lines:  5  iCalls:  4
+round_trip_fuzzer
+cfi lines:  0  iCalls:  3
+round_trip_stream_fuzzer
+cfi lines:  8  iCalls:  4
+compress_frame_fuzzer
+cfi lines:  5  iCalls:  4
+decompress_fuzzer
+cfi lines:  0  iCalls:  3
+round_trip_hc_fuzzer
+cfi lines:  0  iCalls:  3
+compress_fuzzer
+cfi lines:  0  iCalls:  3
+decompress_frame_fuzzer
+cfi lines:  0  iCalls:  3
+compress_hc_fuzzer
+cfi lines:  0  iCalls:  3
+
+
+libxml2
+schema
+cfi lines:  221  iCalls:  1688
+xml
+cfi lines:  282  iCalls:  1788
+regexp
+cfi lines:  142  iCalls:  340
+uri
+cfi lines:  15  iCalls:  347
+html
+cfi lines:  220  iCalls:  1185
+xpath
+cfi lines:  266  iCalls:  1406
+
+
+hunspell
+fuzzer
+cfi lines:  0  iCalls:  948
+utf8_nonbmp.test
+cfi lines:  0  iCalls:  0
+affdicfuzzer
+cfi lines:  0  iCalls:  954
+
+
+unbound
+
+
+libpng
+libpng_read_fuzzer
+cfi lines:  0  iCalls:  1131
+
+
+gdbm
+
+
+zeek
+
+
+expat
+xml_parse_fuzzer_UTF-16
+cfi lines:  133  iCalls:  365
+xml_parse_fuzzer_UTF-16LE
+cfi lines:  133  iCalls:  365
+xml_parse_fuzzer_UTF-8
+cfi lines:  133  iCalls:  365
+xml_parsebuffer_fuzzer_UTF-16BE
+cfi lines:  133  iCalls:  363
+xml_parsebuffer_fuzzer_UTF-16LE
+cfi lines:  133  iCalls:  363
+xml_parsebuffer_fuzzer_US-ASCII
+cfi lines:  133  iCalls:  363
+xml_parsebuffer_fuzzer_UTF-16
+cfi lines:  133  iCalls:  363
+xml_parsebuffer_fuzzer_ISO-8859-1
+cfi lines:  133  iCalls:  363
+xml_parse_fuzzer_UTF-16BE
+cfi lines:  133  iCalls:  365
+xml_parse_fuzzer_US-ASCII
+cfi lines:  133  iCalls:  365
+xml_parsebuffer_fuzzer_UTF-8
+cfi lines:  133  iCalls:  363
+xml_parse_fuzzer_ISO-8859-1
+cfi lines:  133  iCalls:  365
+
+
+janet
+fuzz_dostring
+cfi lines:  9  iCalls:  4
+
+
+libmpeg2
+mpeg2_dec_fuzzer
+cfi lines:  61  iCalls:  250
+
+
+flac
+fuzzer_tool_flac
+cfi lines:  61  iCalls:  70
+fuzzer_encoder
+cfi lines:  39  iCalls:  320
+fuzzer_seek
+cfi lines:  11  iCalls:  41
+fuzzer_exo
+cfi lines:  13  iCalls:  224
+fuzzer_reencoder
+cfi lines:  47  iCalls:  364
+fuzzer_encoder_v2
+cfi lines:  39  iCalls:  57
+fuzzer_decoder
+cfi lines:  12  iCalls:  283
+fuzzer_metadata
+cfi lines:  13  iCalls:  222
+
+
+h2o
+h2o-fuzzer-url
+cfi lines:  0  iCalls:  3
+h2o-fuzzer-http3
+cfi lines:  367  iCalls:  1744
+h2o-fuzzer-http1
+cfi lines:  499  iCalls:  1824
+h2o-fuzzer-http2
+cfi lines:  460  iCalls:  1821
+
+
+utf8proc
+utf8proc_fuzzer
+cfi lines:  0  iCalls:  3
+
+
+thrift
+
+
+pjsip
+
+
+msgpack-c
+unpack_pack_fuzzer
+cfi lines:  0  iCalls:  186
+
+
+mosquitto
+
+
+dav1d
+dav1d_fuzzer_mt
+cfi lines:  548  iCalls:  200
+dav1d_fuzzer
+cfi lines:  548  iCalls:  200
+
+
+jbig2dec
+
+
+llvm
+
+
+yara
+
+
+pycryptodome
+
+
+sentencepiece
+
+
+rustcrypto
+
+
+wpantund
+
+
+libdwarf
+
+
+bazel-rules-fuzzing-test
+
+
+libphonenumber
+
+
+muparser
+set_eval_fuzzer
+cfi lines:  34  iCalls:  976
+
+
+libass
+libass_fuzzer
+cfi lines:  400  iCalls:  1709
+
+
+cxxopts
+
+
+lame
+
+
+bls-signatures
+
+
+minizip
+unzip_fuzzer
+cfi lines:  44  iCalls:  72
+zip_fuzzer
+cfi lines:  44  iCalls:  72
+
+
+icu
+uloc_open_keywords_fuzzer
+cfi lines:  55  iCalls:  309
+uregex_open_fuzzer
+cfi lines:  191  iCalls:  901
+locale_fuzzer
+cfi lines:  55  iCalls:  309
+number_format_fuzzer
+cfi lines:  239  iCalls:  1705
+collator_compare_fuzzer
+cfi lines:  108  iCalls:  611
+uloc_canonicalize_fuzzer
+cfi lines:  55  iCalls:  309
+uloc_for_language_tag_fuzzer
+cfi lines:  55  iCalls:  309
+unicode_string_codepage_create_fuzzer
+cfi lines:  123  iCalls:  239
+break_iterator_fuzzer
+cfi lines:  163  iCalls:  854
+uloc_is_right_to_left_fuzzer
+cfi lines:  55  iCalls:  309
+ucasemap_fuzzer
+cfi lines:  175  iCalls:  892
+uloc_get_name_fuzzer
+cfi lines:  55  iCalls:  309
+collator_rulebased_fuzzer
+cfi lines:  164  iCalls:  751
+converter_fuzzer
+cfi lines:  105  iCalls:  250
+
+
+muduo
+muduo_http_fuzzer
+cfi lines:  0  iCalls:  189
+
+
+irssi
+event-get-params-fuzz
+cfi lines:  249  iCalls:  133
+theme-load-fuzz
+cfi lines:  249  iCalls:  133
+server-fuzz
+cfi lines:  1548  iCalls:  978
+irssi-fuzz
+cfi lines:  249  iCalls:  133
+
+
+casync
+fuzz-compress
+cfi lines:  0  iCalls:  3
+
+
+clickhouse
+
+
+cjson
+cjson_read_fuzzer
+cfi lines:  0  iCalls:  22
+
+
+msquic
+
+
+xvid
+
+
+miniz
+
+
+lighttpd
+
+
+pffft
+pffft_complex_fuzzer
+cfi lines:  0  iCalls:  3
+pffft_real_fuzzer
+cfi lines:  0  iCalls:  3
+
+
+yajl-ruby
+json_fuzzer
+cfi lines:  15  iCalls:  31
+
+
+libecc
+
+
+mysql-server
+
+
+libssh2
+ssh2_client_fuzzer
+cfi lines:  48  iCalls:  322
+
+
+serenity
+
+
+wxwidgets
+zip
+cfi lines:  41  iCalls:  1626
+
+
+pcl
+ply_reader_fuzzer
+cfi lines:  3  iCalls:  3128
+
+
+pistache
+fuzz_parsers
+cfi lines:  0  iCalls:  1032
+
+
+cairo
+
+
+libcoap
+
+
+mruby
+mruby_proto_fuzzer
+cfi lines:  838  iCalls:  2279
+mruby_fuzzer
+cfi lines:  830  iCalls:  73
+
+
+liblouis
+
+
+git
+
+
+aspell
+
+
+opencv
+core_fuzzer
+cfi lines:  1794  iCalls:  3980
+imdecode_fuzzer
+cfi lines:  1751  iCalls:  3913
+filestorage_read_filename_fuzzer
+cfi lines:  243  iCalls:  1617
+filestorage_read_file_fuzzer
+cfi lines:  243  iCalls:  1617
+filestorage_read_string_fuzzer
+cfi lines:  243  iCalls:  1617
+readnetfromtensorflow_fuzzer
+cfi lines:  1119  iCalls:  5589
+generateusergallerycollage_fuzzer
+cfi lines:  238  iCalls:  1229
+imread_fuzzer
+cfi lines:  1751  iCalls:  3911
+imencode_fuzzer
+cfi lines:  1671  iCalls:  3872
+
+
+samba
+
+
+draco
+draco_pc_decoder_without_dequantization_fuzzer
+cfi lines:  0  iCalls:  1128
+draco_mesh_decoder_without_dequantization_fuzzer
+cfi lines:  0  iCalls:  1092
+draco_mesh_decoder_fuzzer
+cfi lines:  0  iCalls:  1092
+draco_pc_decoder_fuzzer
+cfi lines:  0  iCalls:  1128
+
+
+igraph
+read_graphml_fuzzer
+cfi lines:  0  iCalls:  4408
+read_graphdb_fuzzer
+cfi lines:  0  iCalls:  1158
+read_ncol_fuzzer
+cfi lines:  0  iCalls:  1164
+vertex_separators_fuzzer
+cfi lines:  0  iCalls:  1243
+read_gml_fuzzer
+cfi lines:  0  iCalls:  1164
+read_pajek_fuzzer
+cfi lines:  0  iCalls:  1164
+read_edgelist_fuzzer
+cfi lines:  0  iCalls:  1158
+edge_connectivity_fuzzer
+cfi lines:  0  iCalls:  1237
+bliss_fuzzer
+cfi lines:  0  iCalls:  1788
+read_lgl_fuzzer
+cfi lines:  0  iCalls:  1164
+read_dl_fuzzer
+cfi lines:  0  iCalls:  1164
+
+
+brunsli
+fuzz_decode_streaming
+cfi lines:  5  iCalls:  990
+fuzz_decode
+cfi lines:  5  iCalls:  990
+
+
+mbedtls
+fuzz_pubkey
+cfi lines:  15  iCalls:  12
+fuzz_pkcs7
+cfi lines:  16  iCalls:  12
+fuzz_server
+cfi lines:  133  iCalls:  92
+fuzz_x509crl
+cfi lines:  0  iCalls:  3
+fuzz_privkey
+cfi lines:  84  iCalls:  28
+fuzz_x509crt
+cfi lines:  18  iCalls:  13
+fuzz_dtlsclient
+cfi lines:  134  iCalls:  89
+fuzz_dtlsserver
+cfi lines:  137  iCalls:  92
+fuzz_client
+cfi lines:  131  iCalls:  78
+fuzz_x509csr
+cfi lines:  17  iCalls:  13
+
+
+c-blosc2
+decompress_chunk_fuzzer
+cfi lines:  155  iCalls:  93
+compress_chunk_fuzzer
+cfi lines:  160  iCalls:  96
+compress_frame_fuzzer
+cfi lines:  163  iCalls:  145
+decompress_frame_fuzzer
+cfi lines:  159  iCalls:  121
+
+
+boost
+boost_regex_fuzzer
+cfi lines:  59  iCalls:  1048
+boost_ptree_inforead_fuzzer
+cfi lines:  0  iCalls:  944
+boost_ptree_xmlread_fuzzer
+cfi lines:  0  iCalls:  944
+boost_ptree_iniread_fuzzer
+cfi lines:  0  iCalls:  945
+boost_ptree_jsonread_fuzzer
+cfi lines:  29  iCalls:  997
+
+
+libwebp
+
+
+file
+magic_fuzzer_loaddb
+cfi lines:  4  iCalls:  265
+magic_fuzzer
+cfi lines:  11  iCalls:  267
+magic_fuzzer_fd
+cfi lines:  11  iCalls:  267
+
+
+tesseract-ocr
+fuzzer-api-512x256
+cfi lines:  101  iCalls:  3001
+fuzzer-api
+cfi lines:  101  iCalls:  3001
+
+
+libbpf
+
+
+tinyobjloader
+fuzz_ParseFromString
+cfi lines:  0  iCalls:  945
+
+
+bignum-fuzzer
+
+
+ntpsec
+
+
+tinyusb
+msc
+cfi lines:  7  iCalls:  1115
+cdc
+cfi lines:  7  iCalls:  1115
+net
+cfi lines:  16  iCalls:  1116
+
+
+libvips
+pngsave_buffer_fuzzer
+cfi lines:  5171  iCalls:  6590
+gifsave_buffer_fuzzer
+cfi lines:  5171  iCalls:  6590
+smartcrop_fuzzer
+cfi lines:  5171  iCalls:  6590
+thumbnail_fuzzer
+cfi lines:  5171  iCalls:  6590
+jpegsave_file_fuzzer
+cfi lines:  5171  iCalls:  6590
+webpsave_buffer_fuzzer
+cfi lines:  5171  iCalls:  6590
+jpegsave_buffer_fuzzer
+cfi lines:  5171  iCalls:  6590
+mosaic_fuzzer
+cfi lines:  5171  iCalls:  6590
+sharpen_fuzzer
+cfi lines:  5171  iCalls:  6590
+
+
+tinygltf
+fuzz_gltf
+cfi lines:  21  iCalls:  2178
+
+
+libredwg
+
+
+gpsd
+
+
+gdal
+aig_fuzzer
+cfi lines:  0  iCalls:  54212
+gtiff_fuzzer
+cfi lines:  0  iCalls:  54212
+openfilegdb_fuzzer
+cfi lines:  0  iCalls:  54176
+cad_fuzzer
+cfi lines:  0  iCalls:  54176
+dxf_fuzzer
+cfi lines:  0  iCalls:  54176
+gdal_sdts_fuzzer
+cfi lines:  0  iCalls:  54212
+ogr_filesystem_fuzzer
+cfi lines:  0  iCalls:  54176
+wkb_import_fuzzer
+cfi lines:  0  iCalls:  54176
+rraster_fuzzer
+cfi lines:  0  iCalls:  54212
+ogr_fuzzer
+cfi lines:  0  iCalls:  54176
+mrf_fuzzer
+cfi lines:  0  iCalls:  54212
+gdal_vrt_fuzzer
+cfi lines:  0  iCalls:  54212
+ers_fuzzer
+cfi lines:  0  iCalls:  54212
+csv_fuzzer
+cfi lines:  0  iCalls:  54176
+envi_fuzzer
+cfi lines:  0  iCalls:  54212
+gml_fuzzer
+cfi lines:  0  iCalls:  54176
+isce_fuzzer
+cfi lines:  0  iCalls:  54212
+srp_fuzzer
+cfi lines:  0  iCalls:  54212
+lvbag_fuzzer
+cfi lines:  0  iCalls:  54176
+wasp_fuzzer
+cfi lines:  0  iCalls:  54176
+fgb_fuzzer
+cfi lines:  0  iCalls:  54176
+gdal_vector_translate_fuzzer
+cfi lines:  0  iCalls:  54176
+zarr_fuzzer
+cfi lines:  0  iCalls:  54212
+mitab_tab_fuzzer
+cfi lines:  0  iCalls:  54176
+dimap_fuzzer
+cfi lines:  0  iCalls:  54212
+gmlas_fuzzer
+cfi lines:  0  iCalls:  54176
+get_jpeg2000_structure_fuzzer
+cfi lines:  0  iCalls:  54191
+spatialite_geom_import_fuzzer
+cfi lines:  0  iCalls:  54177
+gtiff_mmap
+cfi lines:  0  iCalls:  54212
+osr_set_from_user_input_fuzzer
+cfi lines:  0  iCalls:  54176
+hfa_fuzzer
+cfi lines:  0  iCalls:  54212
+filename_fuzzer
+cfi lines:  0  iCalls:  54177
+wkt_import_fuzzer
