@@ -1,1 +1,0 @@
-int sedWait(int a,const int b);

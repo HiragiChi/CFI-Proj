@@ -1,8 +1,0 @@
-#include "stdio.h"
-int main(void){
-    int x=1;
-    printf("123123\n");
-    printf("%d",sizeof(char *));
-}
-
-//  "/home/yantingchi/Desktop/clang/clang+llvm-15.0.6-x86_64-linux-gnu-ubuntu-18.04/bin/clang-15" -cc1 -triple x86_64-unknown-linux-gnu -S -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name test.c -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=none -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -mllvm -treat-scalable-fixed-error-as-warning -debug-info-kind=constructor -dwarf-version=5 -debugger-tuning=gdb -v -fcoverage-compilation-dir=/home/yantingchi/Desktop/Lab/indirectCall/OSS-Fuzz/programs/http-parser -resource-dir /home/yantingchi/Desktop/clang/clang+llvm-15.0.6-x86_64-linux-gnu-ubuntu-18.04/lib/clang/15.0.6 -I . -D HTTP_PARSER_STRICT=0 -internal-isystem /home/yantingchi/Desktop/clang/clang+llvm-15.0.6-x86_64-linux-gnu-ubuntu-18.04/lib/clang/15.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -O3 -Wall -Wextra -fdebug-compilation-dir=/home/yantingchi/Desktop/Lab/indirectCall/OSS-Fuzz/programs/http-parser -ferror-limit 19 -fgnuc-version=4.2.1 -fcolor-diagnostics -vectorize-loops -vectorize-slp -load /home/yantingchi/Desktop/Lab/indirectCall/OSS-Fuzz/oss-fuzz/compile-kernels/IRDumper/build/lib/libDumper.so -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o test.o -x c test.c
