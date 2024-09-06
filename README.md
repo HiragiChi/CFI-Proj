@@ -22,6 +22,16 @@ caused by hacky coding styles, LLVM type issues, and implementation
 bugs. 
 
 
+## Yanting
+/src_raw is the raw code, you may modify the code here
+
+/src_check_bitcast_type is where I wrote bitcast analyzer (check Analyzer.cc:IterativeModulePass::run and TyPM.cc:processCasts functions), wherever I modified the code I add "Yanting" commit above it.
+
+/src_Using_MLTA... is where I change the setting to use MLTA to ameliorate TyPM. It is not important
+
+/src is where I want to do an empirical study to see how much callsite might be affected by bitcast using the most coarse grained analysis. You can ignore this.
+
+Remember to change the llvm paths Makefile before you compile. I am using llvm-14.
 ## How to use TyPM
 
 ### Build LLVM 
