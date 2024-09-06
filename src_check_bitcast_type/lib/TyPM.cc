@@ -228,10 +228,6 @@ bool TyPM::judgeCast(User *CO, Module* M)
     Value *toU = CO;
     if (isa<Constant>(fromU) && isa<Function>(fromU))
     {
-        if(FunctionType *ftype=dyn_cast<FunctionType>(toU->getType()))
-            allCastedTypeSet.insert(ftype);
-
-
         Function *f = dyn_cast<Function>(fromU);
         Type *TyFrom = fromU->getType();
         FuncConstCastMap[TyFrom].insert(f);
@@ -239,8 +235,6 @@ bool TyPM::judgeCast(User *CO, Module* M)
     else if (isa<Constant>(toU) && isa<Function>(toU))
     {
         llvm::outs() << "WARNING: function const appears in Casted-to operation \n";
-        if(FunctionType *ftype=dyn_cast<FunctionType>(toU->getType()))
-            allCastedTypeSet.insert(ftype);
         Function *f = dyn_cast<Function>(toU);
         Type *TyFrom = toU->getType();
         FuncConstCastMap[TyFrom].insert(f);
@@ -253,13 +247,8 @@ bool TyPM::judgeCast(User *CO, Module* M)
         {
             // llvm::outs() << "GOT FPTR CAST CASE:  " << *CO;
             // Function *f = dyn_cast<Function>(CO->getOperand(0));
-           
-            
-            
             Type *TyFrom = fromU->getType();
             Type *TyTo = CO->getType();
-            if(FunctionType *ftype=dyn_cast<FunctionType>(TyTo))
-                allCastedTypeSet.insert(ftype);
             FptrCastMap[TyTo].insert(TyFrom); // how many types can a target fptr be casted from;
             // fptrCastSet.insert(CO);
             fptrCastsRecWithModule[M].insert(CO);
@@ -271,13 +260,8 @@ bool TyPM::judgeCast(User *CO, Module* M)
             {
                 // llvm::outs() << "GOT FPTR CAST CASE:  " << *CO;
                 // Function *f = dyn_cast<Function>(CO->getOperand(0));
-                
-                
-                
                 Type *TyFrom = fromU->getType();
                 Type *TyTo = CO->getType();
-                if(FunctionType *ftype=dyn_cast<FunctionType>(TyTo))
-                    allCastedTypeSet.insert(ftype);
                 FptrCastMap[TyTo].insert(TyFrom); // how many types can a target fptr be casted from;
                 // fptrCastSet.insert(CO);
                 fptrCastsRecWithModule[M].insert(CO);

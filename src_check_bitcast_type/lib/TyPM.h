@@ -79,9 +79,7 @@ class TyPM : public MLTA {
 		bool isTargetTy(Type *);
 		// A type such as struct that can contain the target type
 		bool isContainerTy(Type *);
-        std::unordered_set<FunctionType*> allCastedTypeSet; 
-        int castedFptrCount=0;
-        int notCasted=0;
+
 
 		// API for getting dependent modules based on the target type
 		bool resolveFunctionTargets();
