@@ -372,6 +372,7 @@ bool CallGraphPass::doInitialization(Module *M)
         // Handle casts
         processCasts(CastSet, M);
 
+        // exit(0);
         // Collect all stores against fields of composite types in the
         // function
         findStoredTypeIdxInFunction(&F);
@@ -386,47 +387,39 @@ bool CallGraphPass::doInitialization(Module *M)
     if (Ctx->Modules.size() == MIdx)
     {
 
-        if (ENABLE_MLTA > 1)
-        {
-            // Map the declaration functions to actual ones
-            // NOTE: to delete an item, must iterate by reference
-            for (auto &SF : Ctx->sigFuncsMap)
-            {
-                for (auto F : SF.second)
-                {
-                    if (!F)
-                        continue;
-                    if (F->isDeclaration())
-                    {
-                        SF.second.erase(F);
-                        if (Function *AF = Ctx->GlobalFuncMap[F->getGUID()])
-                        {
-                            SF.second.insert(AF);
-                        }
-                    }
-                }
-            }
+        // //yanting
+        printBCs(CastSet);
+        // if (ENABLE_MLTA > 1) {
+        // 	// Map the declaration functions to actual ones
+        // 	// NOTE: to delete an item, must iterate by reference
+        // 	for (auto &SF : Ctx->sigFuncsMap) {
+        // 		for (auto F : SF.second) {
+        // 			if (!F)
+        // 				continue;
+        // 			if (F->isDeclaration()) {
+        // 				SF.second.erase(F);
+        // 				if (Function *AF = Ctx->GlobalFuncMap[F->getGUID()]) {
+        // 					SF.second.insert(AF);
+        // 				}
+        // 			}
+        // 		}
+        // 	}
 
-            for (auto &TF : typeIdxFuncsMap)
-            {
-                for (auto &IF : TF.second)
-                {
-                    for (auto F : IF.second)
-                    {
-                        if (F->isDeclaration())
-                        {
-                            IF.second.erase(F);
-                            if (Function *AF = Ctx->GlobalFuncMap[F->getGUID()])
-                            {
-                                IF.second.insert(AF);
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        // 	for (auto &TF : typeIdxFuncsMap) {
+        // 		for (auto &IF : TF.second) {
+        // 			for (auto F : IF.second) {
+        // 				if (F->isDeclaration()) {
+        // 					IF.second.erase(F);
+        // 					if (Function *AF = Ctx->GlobalFuncMap[F->getGUID()]) {
+        // 						IF.second.insert(AF);
+        // 					}
+        // 				}
+        // 			}
+        // 		}
+        // 	}
+        // }
 
-        MIdx = 0;
+        // MIdx = 0;
     }
 
     return false;
@@ -543,129 +536,143 @@ bool CallGraphPass::doModulePass(Module *M)
     {
 
         Function *F = &*f;
-
-        if (F->isDeclaration() || F->isIntrinsic())
-            continue;
-
-        // Phase 1: Multi-layer type analysis
-        if (AnalysisPhase == 1)
-        {
-            PhaseMLTA(F);
-        }
-        else
-        {
-            // Phase 2-to-n: Modular type analysis
-            // TODO: only iterate over indirect calls
-            PhaseTyPM(F);
-        }
-    }
-
-    // Analysis phase control
-    if (Ctx->Modules.size() == MIdx)
-    {
-
-        if (AnalysisPhase == 2)
-        {
-            //
-            // Clear no longer useful structures
-            //
-            GVFuncTypesMap.clear();
-            TypesFromModuleGVMap.clear();
-            TypesToModuleGVMap.clear();
-        }
-
-        if (AnalysisPhase >= 2)
+        for (inst_iterator i = inst_begin(F), e = inst_end(F);
+             i != e; ++i)
         {
 
-            ResolvedDepModulesMap.clear();
-            bool Iter = true;
-            // Merge the propagation maps
-            moPropMapAll.insert(moPropMap.begin(), moPropMap.end());
-            // Add map one by one to avoid overwritting
-            for (auto m : moPropMapV)
-            {
-                moPropMapAll[m.first].insert(m.second.begin(), m.second.end());
-            }
-
-            // TODO: multi-threading for better performance
-
-            //
-            // Steps 2 and 3 of TyPM: Collecting depedent modules
-            // and resolving targets within  on dependent modules
-            //
-#ifdef FUNCTION_AS_TARGET_TYPE
-            bool NextIter = resolveFunctionTargets();
-#else // struct as target type
-            bool NextIter = resolveStructTargets();
-#endif
-
-            if (!NextIter)
-            {
-                // Done with the iteration
-                MIdx = 0;
-                return false;
-            }
-
-            // Reset the map when phase >= 2
-            moPropMapV.clear();
-            moPropMapAll.clear();
-            ParsedModuleTypeICallMap.clear();
-            ParsedModuleTypeDCallMap.clear();
-        }
-
-        ++AnalysisPhase;
-        MIdx = 0;
-        if (AnalysisPhase <= MAX_PHASE_CG)
-        {
-            OP << "\n\n=== Move to phase " << AnalysisPhase << " ===\n\n";
-            return true;
-        }
-    }
-
-    return false;
-}
-
-void CallGraphPass::processResults()
-{
-
-    // Load traces for evaluation
-    // Key: hash of SrcLn for caller
-    map<size_t, set<size_t>> hashedTraces;
-    map<size_t, SrcLn> hashSrcMap;
-    LoadTraces(hashedTraces, hashSrcMap);
-    size_t TraceCount = 0;
-    for (auto T : hashedTraces)
-    {
-        TraceCount += T.second.size();
-    }
-    OP << "@@ Trace size: " << TraceCount << "\n";
-
-    for (auto T : hashedTraces)
-    {
-        if (calleesSrcMap.find(T.first) == calleesSrcMap.end())
-            continue;
-        for (auto calleehash : T.second)
-        {
-            if (srcLnHashSet.find(calleehash) == srcLnHashSet.end())
+            if (F->isDeclaration() || F->isIntrinsic())
                 continue;
-            if (addrTakenFuncHashSet.find(calleehash) ==
-                addrTakenFuncHashSet.end())
-                continue;
-            if (calleesSrcMap[T.first].count(calleehash))
+
+            if (CallInst *CI = dyn_cast<CallInst>(&*i))
             {
-                // the callee is in the target set
-                SrcLn Caller = hashSrcMap[T.first];
-                OP << "@ Found callee for: " << Caller.Src << " +" << Caller.Ln << "\n";
+                if (CI->isIndirectCall()){
+                    CallBase *CB = dyn_cast<CallBase>(CI);
+                    FunctionType *FTy = CB->getFunctionType();
+                    auto it=allCastedTypeSet.find(FTy); // will function type and type* match each other?
+                    if(it != allCastedTypeSet.end()){
+                        castedFptrCount+=1;
+                    }else notCasted+=1;
+                }
             }
-            else if (L1CalleesSrcMap[T.first].count(calleehash))
+            
+            // find icalls inside F and then check their types
+
+            // // Phase 1: Multi-layer type analysis
+            // if (AnalysisPhase == 1) {
+            // 	PhaseMLTA(F);
+            // } else {
+            // 	// Phase 2-to-n: Modular type analysis
+            // 	// TODO: only iterate over indirect calls
+            // 	PhaseTyPM(F);
+            // }
+        }
+
+        // Analysis phase control
+//         if (Ctx->Modules.size() == MIdx)
+//         {
+
+//             if (AnalysisPhase == 2)
+//             {
+//                 //
+//                 // Clear no longer useful structures
+//                 //
+//                 GVFuncTypesMap.clear();
+//                 TypesFromModuleGVMap.clear();
+//                 TypesToModuleGVMap.clear();
+//             }
+
+//             if (AnalysisPhase >= 2)
+//             {
+
+//                 ResolvedDepModulesMap.clear();
+//                 bool Iter = true;
+//                 // Merge the propagation maps
+//                 moPropMapAll.insert(moPropMap.begin(), moPropMap.end());
+//                 // Add map one by one to avoid overwritting
+//                 for (auto m : moPropMapV)
+//                 {
+//                     moPropMapAll[m.first].insert(m.second.begin(), m.second.end());
+//                 }
+
+//                 // TODO: multi-threading for better performance
+
+//                 //
+//                 // Steps 2 and 3 of TyPM: Collecting depedent modules
+//                 // and resolving targets within  on dependent modules
+//                 //
+// #ifdef FUNCTION_AS_TARGET_TYPE
+//                 bool NextIter = resolveFunctionTargets();
+// #else // struct as target type
+//                 bool NextIter = resolveStructTargets();
+// #endif
+
+//                 if (!NextIter)
+//                 {
+//                     // Done with the iteration
+//                     MIdx = 0;
+//                     return false;
+//                 }
+
+//                 // Reset the map when phase >= 2
+//                 moPropMapV.clear();
+//                 moPropMapAll.clear();
+//                 ParsedModuleTypeICallMap.clear();
+//                 ParsedModuleTypeDCallMap.clear();
+//             }
+
+            ++AnalysisPhase;
+            MIdx = 0;
+            if (AnalysisPhase <= MAX_PHASE_CG)
             {
-                // false negative
-                OP << "!! Cannot find callee\n";
-                SrcLn Caller = hashSrcMap[T.first];
-                SrcLn Callee = hashSrcMap[calleehash];
-                OP << "@ Caller: " << Caller.Src << " +" << Caller.Ln << "\n";
-                OP << "\t@ Callee: " << Callee.Src << " +" << Callee.Ln << "\n";
+                OP << "\n\n=== Move to phase " << AnalysisPhase << " ===\n\n";
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    void CallGraphPass::processResults()
+    {
+
+        // Load traces for evaluation
+        // Key: hash of SrcLn for caller
+        map<size_t, set<size_t>> hashedTraces;
+        map<size_t, SrcLn> hashSrcMap;
+        LoadTraces(hashedTraces, hashSrcMap);
+        size_t TraceCount = 0;
+        for (auto T : hashedTraces)
+        {
+            TraceCount += T.second.size();
+        }
+        OP << "@@ Trace size: " << TraceCount << "\n";
+
+        for (auto T : hashedTraces)
+        {
+            if (calleesSrcMap.find(T.first) == calleesSrcMap.end())
+                continue;
+            for (auto calleehash : T.second)
+            {
+                if (srcLnHashSet.find(calleehash) == srcLnHashSet.end())
+                    continue;
+                if (addrTakenFuncHashSet.find(calleehash) ==
+                    addrTakenFuncHashSet.end())
+                    continue;
+                if (calleesSrcMap[T.first].count(calleehash))
+                {
+                    // the callee is in the target set
+                    SrcLn Caller = hashSrcMap[T.first];
+                    OP << "@ Found callee for: " << Caller.Src << " +" << Caller.Ln << "\n";
+                }
+                else if (L1CalleesSrcMap[T.first].count(calleehash))
+                {
+                    // false negative
+                    OP << "!! Cannot find callee\n";
+                    SrcLn Caller = hashSrcMap[T.first];
+                    SrcLn Callee = hashSrcMap[calleehash];
+                    OP << "@ Caller: " << Caller.Src << " +" << Caller.Ln << "\n";
+                    OP << "\t@ Callee: " << Callee.Src << " +" << Callee.Ln << "\n";
+                }
             }
         }
     }
-}

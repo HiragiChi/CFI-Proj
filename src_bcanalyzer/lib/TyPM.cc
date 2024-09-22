@@ -231,6 +231,7 @@ bool TyPM::judgeCast(User *CO, Module* M)
         Function *f = dyn_cast<Function>(fromU);
         Type *TyFrom = fromU->getType();
         FuncConstCastMap[TyFrom].insert(f);
+        fconstantCastsRecWithModule[M].insert(CO);
     }
     else if (isa<Constant>(toU) && isa<Function>(toU))
     {
@@ -286,52 +287,63 @@ void TyPM::printBCs(set<User *> &CastSet)
 
     // print fptr casts
     int totalFptrCasts=0;
-    for (const auto& entry : fptrCastsRecWithModule)
+    int totalFconstantCasts=0;
+    for (const auto& entry : fconstantCastsRecWithModule)
     {
         Module* module = entry.first;
         const std::set<User*>& castSet = entry.second;
         llvm::outs() << "Module: " << module->getName() << "\n";
         for (User* cast : castSet)
         {
-            llvm::outs() << "FPTR CAST: " << *cast << "\n";
+            llvm::outs() << "Fconstant CAST: " << *cast << "\n";
         }
-        totalFptrCasts+=castSet.size();
+        totalFconstantCasts+=castSet.size();
     }
-    // for (auto CO : fptrCastSet)
+    
+    // for (const auto& entry : fptrCastsRecWithModule)
     // {
-    //     llvm::outs() << "FPTR CAST: " << *CO << "\n";
+    //     Module* module = entry.first;
+    //     const std::set<User*>& castSet = entry.second;
+    //     llvm::outs() << "Module: " << module->getName() << "\n";
+    //     for (User* cast : castSet)
+    //     {
+    //         llvm::outs() << "FPTR CAST: " << *cast << "\n";
+    //     }
+    //     totalFptrCasts+=castSet.size();
     // }
+
     llvm::outs() << "FPTR CAST: Total = " << totalFptrCasts << "\n\n";
+    llvm::outs() << "Fconstant CAST: Total = " << totalFconstantCasts << "\n\n";
     // Iterate through the cast set yanting
     //  Print entries in FuncConstCastMap
-    int constCastCount = 0;
-    for (const auto &entry : FuncConstCastMap)
-    {
-        Type *key = entry.first;
-        const std::set<Function *> &value = entry.second;
-        llvm::outs() << "FuncConstCastMap Entry: Key = " << printtype(key) << "\n";
-        for (const auto &func : value)
-        {
-            llvm::outs() << "\t\tValue = " << func->getName() << "\n";
-            ++constCastCount;
-        }
-    }
-    llvm::outs() << "FuncConstCastMap Entry: Total = " << constCastCount << "\n\n";
+    // int constCastCount = 0;
+    // for (const auto &entry : FuncConstCastMap)
+    // {
+    //     Type *key = entry.first;
+    //     const std::set<Function *> &value = entry.second;
+    //     llvm::outs() << "FuncConstCastMap Entry: Key = " << printtype(key) << "\n";
+    //     for (const auto &func : value)
+    //     {
+    //         llvm::outs() << "\t\tValue = " << func->getName() << "\n";
+    //         ++constCastCount;
+    //     }
+    // }
+    // llvm::outs() << "FuncConstCastMap Entry: Total = " << constCastCount << "\n\n";
 
-    int fptrCastCount = 0;
-    // Print entries in FptrCastMap
-    for (const auto &entry : FptrCastMap)
-    {
-        Type *key = entry.first;
-        const std::set<Type *> &value = entry.second;
-        llvm::outs() << "FptrCastMap Entry: Key = " << printtype(key) << "\n";
-        for (const auto &type : value)
-        {
-            llvm::outs() << "\t\tValue = " << printtype(type) << "\n";
-            ++fptrCastCount;
-        }
-    }
-    llvm::outs() << "FptrCastMap Entry: Total = " << fptrCastCount << "\n\n";
+    // int fptrCastCount = 0;
+    // // Print entries in FptrCastMap
+    // for (const auto &entry : FptrCastMap)
+    // {
+    //     Type *key = entry.first;
+    //     const std::set<Type *> &value = entry.second;
+    //     llvm::outs() << "FptrCastMap Entry: Key = " << printtype(key) << "\n";
+    //     for (const auto &type : value)
+    //     {
+    //         llvm::outs() << "\t\tValue = " << printtype(type) << "\n";
+    //         ++fptrCastCount;
+    //     }
+    // }
+    // llvm::outs() << "FptrCastMap Entry: Total = " << fptrCastCount << "\n\n";
 }
 
 void TyPM::processCasts(set<User *> &CastSet, Module *M)
@@ -350,6 +362,7 @@ void TyPM::processCasts(set<User *> &CastSet, Module *M)
     {
 
         // yanting
+        // remove constant casts. 
         judgeCast(CO,M);
         Type *TyFrom = CO->getOperand(0)->getType();
         Type *TyTo = CO->getType();

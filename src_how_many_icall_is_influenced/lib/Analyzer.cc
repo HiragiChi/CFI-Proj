@@ -75,6 +75,7 @@ void IterativeModulePass::run(ModuleList &modules) {
 		}
 	}
 	OP << "\n";
+    //yanting
 
 	unsigned iter = 0, changed = 1;
 	while (changed) {
@@ -108,6 +109,8 @@ void IterativeModulePass::run(ModuleList &modules) {
 	}
 
 	OP << "[" << ID << "] Done!\n\n";
+    llvm::outs() << "casted_count:  " << castedFptrCount << "\n";
+    llvm::outs() << "not_casted_count:  " << notCasted << "\n";
 }
 
 void PrintResults(GlobalContext *GCtx) {

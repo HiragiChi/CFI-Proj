@@ -38,6 +38,13 @@
         "unordered_set": "cpp",
         "map": "cpp",
         "set": "cpp",
-        "iosfwd": "cpp"
-    }
+        "iosfwd": "cpp",
+        "string_view": "cpp",
+        "initializer_list": "cpp",
+        "__hash_table": "cpp",
+        "__split_buffer": "cpp",
+        "queue": "cpp",
+        "stack": "cpp"
+    },
+    "cmake.sourceDirectory": "/home/yantingchi/Desktop/static_analysis/tools/typm/src"
 }

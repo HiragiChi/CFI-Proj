@@ -926,6 +926,9 @@ void MLTA::printTargets(FuncSet &FS, CallInst *CI) {
 			OP<<"ERROR: print declaration function: "<<F->getName()<<"\n";
 			continue;
 		}
+        // yanting 
+
+
 		printSourceCodeInfo(F, "TARGET");
 		//WriteSourceInfoIntoFile(F, "IcallInfo.txt");
 	}

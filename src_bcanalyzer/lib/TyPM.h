@@ -48,7 +48,15 @@ class TyPM : public MLTA {
         DenseMap<Type*,std::set<Function*>> FuncConstCastMap;
         DenseMap<Type*,std::set<Type*>> FptrCastMap;
         DenseMap<Module*, set<User*>> fptrCastsRecWithModule;
+        DenseMap<Module*, set<User*>> fconstantCastsRecWithModule;
         set<User *> fptrCastSet; // deprecated
+
+        // yanting: statistical data:
+        DenseMap<CallInst*, set<Type*>> CallInstCastMap;
+        int affectedCallsites=0;
+
+
+
 
 		// Function types that can be held by the GV
 		DenseMap<GlobalVariable *, set<Type *>>GVFuncTypesMap;

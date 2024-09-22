@@ -5,3 +5,4 @@ tags
 llvm-project
 *.swp
 .history
+test.sh
