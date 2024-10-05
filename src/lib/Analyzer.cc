@@ -75,7 +75,8 @@ void IterativeModulePass::run(ModuleList &modules) {
 		}
 	}
 	OP << "\n";
-
+    //yanting
+    exit(0);
 	unsigned iter = 0, changed = 1;
 	while (changed) {
 		++iter;

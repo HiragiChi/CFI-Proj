@@ -911,15 +911,7 @@ void MLTA::printTypeChain(list<typeidx_t> &Chain) {
 }
 
 void MLTA::printTargets(FuncSet &FS, CallInst *CI) {
-    FunctionType *callerType=CI->getFunctionType();
-    int mismatchCount=0;
-    auto printtype = [](Type *Ty)
-    {
-        std::string fromType_name;
-        llvm::raw_string_ostream srcRso(fromType_name);
-        Ty->print(srcRso);
-        return fromType_name;
-    };
+
 	if (CI) {
 #ifdef PRINT_SOURCE_LINE
 		OP<<"[CallGraph] Indirect call: "<<*CI<<"\n";
@@ -934,16 +926,7 @@ void MLTA::printTargets(FuncSet &FS, CallInst *CI) {
 			OP<<"ERROR: print declaration function: "<<F->getName()<<"\n";
 			continue;
 		}
-		
-        if(F->getFunctionType()!=callerType){
-            OP << "MISMATCH: " << F->getName() << " " << printtype(F->getFunctionType()) << "\n";
-            continue;
-            mismatchCount++;
-        }
-        if(mismatchCount>0)
-            OP << "MISMATCH COUNT: " << mismatchCount << "\n";  
-        printSourceCodeInfo(F, "TARGET");
-
+		printSourceCodeInfo(F, "TARGET");
 		//WriteSourceInfoIntoFile(F, "IcallInfo.txt");
 	}
 	OP<<"\n";

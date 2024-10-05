@@ -44,6 +44,20 @@ class TyPM : public MLTA {
 		DenseMap<Module *, map<Type *, set<Type *>>> CastFromMap;
 		DenseMap<Module *, map<Type *, set<Type *>>> CastToMap;
 
+        // yanting function constant map
+        DenseMap<Type*,std::set<Function*>> FuncConstCastMap;
+        DenseMap<Type*,std::set<Type*>> FptrCastMap;
+        DenseMap<Module*, set<User*>> fptrCastsRecWithModule;
+        DenseMap<Module*, set<User*>> fconstantCastsRecWithModule;
+        set<User *> fptrCastSet; // deprecated
+
+        // yanting: statistical data:
+        DenseMap<CallInst*, set<Type*>> CallInstCastMap;
+        int affectedCallsites=0;
+
+
+
+
 		// Function types that can be held by the GV
 		DenseMap<GlobalVariable *, set<Type *>>GVFuncTypesMap;
 		// Modules that store function pointers of the type to the global
@@ -65,6 +79,10 @@ class TyPM : public MLTA {
 		// Methods
 		//
 
+
+        //yanting
+        bool judgeCast(User * castI,Module* M);
+        void printBCs(set<User *> &CastSet);
 		// Custom isTargetTy to decide if it is interested type
 		bool isTargetTy(Type *);
 		// A type such as struct that can contain the target type
